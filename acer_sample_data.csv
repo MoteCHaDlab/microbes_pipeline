@@ -1,0 +1,65 @@
+"","Sample.ID","Orig_geno_ID","X2020_Mote_ID","Genotype","Outlier","sampling_date","Species","Lat","Long","Region","collection_date","Baums_MSAT_clonal_ID","Proposed_pheno"
+"AC1.4","AC1.4","1","M-L-1","1.4","No","11/12/19","cervicornis",24.56937,-81.33028,"Lower Keys","2/23/08","C1153 (AF)","Susceptible"
+"AC10.4","AC10.4","10","M-L-10","10.4","No","11/12/19","cervicornis",24.61515,-81.37917,"Lower Keys","2/23/08","C1083 (DG)","Susceptible"
+"AC13.22","AC13.22","13","M-L-13","13.22","No","11/12/19","cervicornis",24.59592,-81.37162,"Lower Keys","12/1/09","C1365","Susceptible"
+"AC20","AC20","20","M-L-20","20","No","12/13/19","cervicornis",24.62167,-81.36313,"Lower Keys","12/15/09","C1191","Susceptible"
+"AC29","AC29","29","M-L-29","29","No","12/13/19","cervicornis",24.52172,-81.57675,"Lower Keys","5/28/10","C1377",NA
+"AC31.15","AC31.15","31","M-L-31","31.15","No","11/12/19","cervicornis",24.5477,-81.45696,"Lower Keys","3/18/10","C1369","Susceptible"
+"AC34","AC34","34","M-L-34","34","No","12/13/19","cervicornis",24.53865,-81.44358,"Lower Keys","3/26/10","C1363","Susceptible"
+"AC38","AC38","38","M-L-38","38","No","12/13/19","cervicornis",24.56306,-81.40063,"Lower Keys","4/5/10","C1378",NA
+"AC4.13","AC4.13","4","M-L-4","4.13","No","11/12/19","cervicornis",24.56935,-81.38168,"Lower Keys","2/23/08","C1156 (CW)","Susceptible"
+"AC41.24","AC41.24","41","M-L-41","41.24","No","11/12/19","cervicornis",24.5532,-81.43758,"Lower Keys","5/10/10","C1374 ","Susceptible"
+"AC44.3","AC44.3","44","M-L-44","44.3","No","11/12/19","cervicornis",24.5686,-81.3265,"Lower Keys","5/21/10","C1459 ","Susceptible"
+"AC46.21","AC46.21","46","M-L-46","46.21","No","11/12/19","cervicornis",24.5608,-81.50143,"Lower Keys","5/25/10","C1507","Susceptible"
+"AC47.21","AC47.21","47","M-L-47","47.21","No","11/13/19","cervicornis",24.54835,-81.5332,"Lower Keys","5/25/10","C1376","Susceptible"
+"AC48","AC48","48","M-L-48","48","No","12/13/19","cervicornis",24.5215,-81.5769,"Lower Keys","5/28/10","C1166",NA
+"AC5.5","AC5.5","5","M-L-5","5.5","No","11/12/19","cervicornis",24.52257,-81.51978,"Lower Keys","2/22/08","C1157 (CU)","Susceptible"
+"AC50.18","AC50.18","50","M-L-50","50.18","No","11/13/19","cervicornis",24.54854,-81.53308,"Lower Keys","7/30/10","C1170 ","Susceptible"
+"AC51","AC51","51","M-L-51","51","No","12/13/19","cervicornis",24.52735,-81.49895,"Lower Keys","10/1/10","C1460 ",NA
+"AC54","AC54","54","M-L-54","54","No","12/13/19","cervicornis",24.55903,-81.41293333,"Lower Keys","11/11/10","C1461 ",NA
+"AC55","AC55","55","M-L-55","55","No","12/13/19","cervicornis",24.55913,-81.41338,"Lower Keys","11/11/10","C1261",NA
+"AC56","AC56","56","M-L-56","56","No","12/13/19","cervicornis",24.55912,-81.41357,"Lower Keys","11/11/10","C1510",NA
+"AC57.9","AC57.9","57","M-L-57","57.9","No","11/13/19","cervicornis",24.55948,-81.41322,"Lower Keys","11/11/10","C1511","Susceptible"
+"AC58.3","AC58.3","58","M-L-58","58.3","No","11/13/19","cervicornis",24.52328,-81.53572,"Lower Keys","11/16/10","C1462 ","Susceptible"
+"AC6","AC6","6","M-L-6","6","No","12/13/19","cervicornis",24.52298,-81.52043,"Lower Keys","2/22/08","C1158 (AH)",NA
+"AC62.13","AC62.13","62","M-L-62","62.13","No","11/13/19","cervicornis",24.52983,-81.64069,"Lower Keys","5/21/13","not genotyped","Susceptible"
+"AC63","AC63","63","M-L-63","63","No","12/13/19","cervicornis",24.52983,-81.64069,"Lower Keys","5/21/13","not genotyped",NA
+"AC70","AC70","70","M-L-70","70","No","12/13/19","cervicornis",24.55717,-81.51013,"Lower Keys","5/51/15","not genotyped",NA
+"AC75","AC75","75","M-L-75","75","No","12/13/19","cervicornis",24.5401,-81.44882,"Lower Keys","12/15/15","not genotyped",NA
+"AC76","AC76","76","M-L-76","76","No","12/13/19","cervicornis",24.52658,-81.50102,"Lower Keys","2/17/16","not genotyped",NA
+"AC77","AC77","77","M-L-77","77","No","12/13/19","cervicornis",24.52999,-81.48959,"Lower Keys","2/17/16","not genotyped",NA
+"AC78","AC78","78","M-L-78","78","No","12/13/19","cervicornis",24.52999,-81.48959,"Lower Keys","2/17/16","not genotyped",NA
+"AC79","AC79","79","M-L-79","79","No","12/13/19","cervicornis",24.5264,-81.50517,"Lower Keys","2/29/16","not genotyped",NA
+"AC8","AC8","8","M-L-8","8","No","12/13/19","cervicornis",24.58353,-81.43298,"Lower Keys","2/23/08","C1160 (L)",NA
+"AC80","AC80","80","M-L-80","80","No","12/13/19","cervicornis",24.5264,-81.50517,"Lower Keys","2/29/16","not genotyped",NA
+"AC84","AC84","84","M-L-84","84","No","12/13/19","cervicornis",24.54129,-81.44031,"Lower Keys","3/1/16","not genotyped",NA
+"AC88","AC88","88","M-L-88","88","No","12/13/19","cervicornis",24.51766,-81.5441,"Lower Keys","3/2/16","not genotyped",NA
+"AC89","AC89","89","M-L-89","89","No","12/13/19","cervicornis",24.51766,-81.5441,"Lower Keys","3/2/16","not genotyped",NA
+"CU.K2","CU.K2","CU-K2","C-U-K2","K2","No","12/13/19","cervicornis",24.9822,-80.4363,"Upper Keys","1996","107",NA
+"CU.K3","CU.K3","CU-K3","C-U-K3","K3","No","12/13/19","cervicornis",24.9822,-80.4363,"Upper Keys","1996","164",NA
+"CU12.19","CU12.19","CU-12","C-U-12","12.19","No","11/12/19","cervicornis",24.966,-80.4887,"Upper Keys","1/13/06","TNC C12",NA
+"CU19.8","CU19.8","CU-19","C-U-19","19.8","No","11/13/19","cervicornis",24.98787,-80.47833,"Upper Keys","2/18/06","TNC C19",NA
+"CU24","CU24","CU-24","C-U-24","24","No","12/13/19","cervicornis",24.82555,-80.65162,"Upper Keys","5/6/08","C1433",NA
+"CU25.13","CU25.13","CU-25","C-U-25","25.13","No","11/13/19","cervicornis",24.82612,-80.65123,"Upper Keys","5/6/08","C1418",NA
+"CU27.4","CU27.4","CU-27","C-U-27","27.4","No","11/13/19","cervicornis",24.95703,-80.48503,"Upper Keys","11/6/08","C1422",NA
+"CU28","CU28","CU-28","C-U-28","28","No","12/13/19","cervicornis",24.93753,-80.48353,"Upper Keys","11/6/08","C1440",NA
+"CU30","CU30","CU-30","C-U-30","30","No","12/13/19","cervicornis",24.98853333,-80.4668,"Upper Keys","5/13/08","C1428",NA
+"CU43","CU43","CU-43","C-U-43","43","No","12/13/19","cervicornis",24.95188,-80.49162,"Upper Keys","10/25/09","C1495",NA
+"CU44","CU44","CU-44","C-U-44","44","No","12/13/19","cervicornis",24.98812,-80.46372,"Upper Keys","5/5/10","C1412",NA
+"CU69.17","CU69.17","CU-69","C-U-69","69.17","No","11/13/19","cervicornis",24.81532,-80.66442,"Upper Keys","2/2/11","C1493",NA
+"CU76","CU76","CU-76","C-U-76","76","No","12/13/19","cervicornis",24.82163,-80.65608,"Upper Keys","6/14/11","C1500",NA
+"CM2","CM2","CM-2","C-M-2","","","12/13/19","cervicornis",24.72015,-80.92875,"Middle Keys","4/24/08","C1475",NA
+"CM5","CM5","CM-5","C-M-5","","","12/13/19","cervicornis",24.71178333,-80.94596667,"Middle Keys","4/24/08","C1297",NA
+"CM6","CM6","CM-6","C-M-6","","","12/13/19","cervicornis",24.71081667,-80.948,"Middle Keys","4/24/08","C1294",NA
+"FM.12","FM.12","FM-12","F-M-12",NA,NA,"12/13/19","cervicornis",24.63965,-81.0662,"Middle Keys","5/6/10","C1401",NA
+"FM.13","FM.13","FM-13","F-M-13",NA,NA,"12/13/19","cervicornis",24.69767,-80.9581,"Middle Keys","5/5/10","C1408",NA
+"FM.14","FM.14","FM-14","F-M-14",NA,NA,"12/13/19","cervicornis",24.69756,-80.95852,"Middle Keys","5/5/10","C1407",NA
+"FM.18","FM.18","FM-18","F-M-18",NA,NA,"12/13/19","cervicornis",24.77885,-80.7349,"Middle Keys","4/20/10","C1403",NA
+"FM.19","FM.19","FM-19","F-M-19",NA,NA,"12/13/19","cervicornis",24.7763,-80.73651,"Middle Keys","4/20/10","C1404",NA
+"FM.20","FM.20","FM-20","F-M-20",NA,NA,"12/13/19","cervicornis",24.77885,-80.7349,"Middle Keys","4/20/10","C1396",NA
+"FM.21","FM.21","FM-21","F-M-21",NA,NA,"12/13/19","cervicornis",24.75825,-80.76598,"Middle Keys","1/19/11","no data",NA
+"FM.4","FM.4","FM-4","F-M-4",NA,NA,"12/13/19","cervicornis",24.66427,-81.07655,"Middle Keys","4/28/10","C1397",NA
+"FM.5","FM.5","FM-5","F-M-5",NA,NA,"12/13/19","cervicornis",24.70217,-80.93867,"Middle Keys","3/18/10","C1406",NA
+"FM.6","FM.6","FM-6","F-M-6",NA,NA,"12/13/19","cervicornis",24.70217,-80.93867,"Middle Keys","3/18/10","C1406",NA
+"FM.7","FM.7","FM-7","F-M-7",NA,NA,"12/13/19","cervicornis",24.69767,-80.9581,"Middle Keys","3/18/10","C1398",NA
+"FM.9","FM.9","FM-9","F-M-9",NA,NA,"12/13/19","cervicornis",24.66427,-81.07655,"Middle Keys","4/28/10","C1397",NA

@@ -11,3 +11,5 @@ INSERT description of what code files are included here, like a table of content
 ### Log Book
 
 3/5/21: Sara created repository, started readme, and set up intro to phyloseq
+
+3/5/21: Sara learns how to correctly use github...

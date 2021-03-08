@@ -6,6 +6,7 @@ output: html_notebook
 ## What is phyloseq?
 
 explanation of package
+
 https://www.rdocumentation.org/packages/phyloseq/versions/1.16.2 <- link to rdocumentation/list of functions in the phyloseq package
 
 Packages you will need for doing basic microbial analyses:
@@ -67,18 +68,42 @@ data.frame(otu_table(ps)) #this is how you actually view the otu table data
 ### Filtering, subsetting, and pruning your phyloseq object
 
 ```{r Filtering and pruning}
+#You can filter taxa to remove the smallest abundances with the line below
 physeq.f<-filter_taxa(ps, function(x) sum(x >= 100) > (0.01*length(x)), prune = TRUE) #filter out super small numbers
 physeq.f #FIX????
+
+#You can also convert your data from raw abundance data to relative abundance data
+physeq.f.ra <- transform_sample_counts(ps, function(x) x*100/sum(x)) #transform to relative abundance from raw abundance
+rowSums(data.frame(otu_table(physeq.f.ra)))#if the line above worked right, all of the row sums should be 100
+
+#You can also merge samples by a variable in the sample data, i.e. Region
+psregmerge <- merge_samples(ps,"Region")#the second part is the variable name be sure to spell it correctly, capitalize correctly, and keep it in quotations, if it doesn't match its name in your sample data, then this line WONT work
+#Do not let the warning message from merge_samples() alarm you, it is not harmful
+data.frame(otu_table(psregmerge)) #if done right, this data is now combines so there is 1 abundance row in the otu table for each region
 ```
 ##### subsetting
+complete list of R operators here: https://www.statmethods.net/management/operators.html
 ```{r Subsetting your data}
-#subsetting your data by info from the sample data
-psup <- subset_samples(ps, Region=="Upper Keys")
+#subsetting your data by info from the sample data, using ==
+psup <- subset_samples(ps, Region=="Upper Keys") #this subsets your data by region equals Upper Keys, so you only get Upper Keys
 psup #this object should have 1195 taxa and 13 samples
-psmid <- subset_samples(ps, Region=="Middle Keys")
+psmid <- subset_samples(ps, Region=="Middle Keys") #this subsets your data by region equals Middle Keys, so you only get Middle Keys
 psmid #this object should have 1195 taxa and 15 samples
-pslow <- subset_samples(ps, Region=="Lower Keys")
+pslow <- subset_samples(ps, Region=="Lower Keys") #this subsets your data by region equals Lower Keys, so you only get Lower Keys
 pslow #this object should have 1195 taxa and 36 samples
+
+####subsetting you data by info from the sample data, using other boolean operators##########
+psnolow <- subset_samples(ps, Region!="Lower Keys") #this uses the != operator (AKA not equal to) to subset for everything except the lower keys
+sample_data(psnolow)
+
+#you can subset by more than just equal to or not equal to
+pslatlong <- subset_samples(ps, Lat>=24.5&&Long<=81.5) #this uses the && operator (AKA and) to subset by Lat and Long, this also uses the >= (AKA greater than or equal to) to subset Lat so it only includes latitudes >= 24.5, and it uses <= (AKA less that or equal to) to subset Long so it only includes longitudes <= 81.5
+sample_data(pslatlong)
+
+#you can also subset by or not just and
+psuplow <- subset_samples(ps, Region=="Upper Keys"|Region=="Lower Keys") #this uses the | operator (AKA or) to subset, choosing any samples that are upper keys OR lower keys 
+#this is different than && because && requires both halves to be true, but for | one half or the other can be true not necessarily both
+sample_data(psuplow)
 
 #subsetting your data by taxonomy
 psrick <- subset_taxa(ps, Order=="Rickettsiales")

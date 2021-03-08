@@ -20,4 +20,4 @@ test 1 2 3
 
 Let's break github!!!! :)
 
-3/8/21: Samara working on Intro to Phyloseq, CONCERN: filtering taxa filters it down to 17 taxa from 1195 taxa, not sure what to include besides filtering out small taxa for filtering/pruning
+3/8/21: Samara working on Intro to Phyloseq, CONCERN: filtering taxa filters it down to 17 taxa from 1195 taxa, not sure what else to include for filtering/pruning

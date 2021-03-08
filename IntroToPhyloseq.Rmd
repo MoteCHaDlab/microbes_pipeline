@@ -6,6 +6,7 @@ output: html_notebook
 ## What is phyloseq?
 
 explanation of package
+https://www.rdocumentation.org/packages/phyloseq/versions/1.16.2 <- link to rdocumentation/list of functions in the phyloseq package
 
 Packages you will need for doing basic microbial analyses:
 ```{r}
@@ -21,26 +22,60 @@ library(vegan)
 
 ### Explanation of practice dataset we will use and getting it into R
 
-```{r}
+```{r Make the components of the phyloseq object}
+otudf <- read.csv("acer_otu_table.csv",row.names = 1) #loads csv file into R as a dataframe
+#row.names = 1 is important, it sets the table's row names to the sample ID or taxa if taxa are rows so that it can be come a numeric matrix required for otu_table()
+otumat<- as.matrix(otudf) #otu_table() doesn't like dataframes so you need to convert to a matrix
+otu <- otu_table(otudf, taxa_are_rows = FALSE) #makes data into an otu table object
+#be sure to confirm whether or not your taxa are rows or columns, in this case they are rows
 
+taxdf <- read.csv("acer_tax_table.csv", row.names = 1) #loads csv file into R as a dataframe
+#row.names = 1 is important, it sets the table's row names to the ASV ID, otherwise, it gets confused and sets the ID to the kingdom row
+taxmat <- as.matrix(taxdf) #tax_table needs matrices not dataframes 
+tax <- tax_table(taxmat) #makes data into a taxonomy table object
+
+samdf <- read.csv("acer_sample_data.csv",row.names = 1) #loads csv file into R as a dataframe
+#row.names = 1 is important because without it, r will not be able to match the sample names from the sample data to the otu table when building the phyloseq object
+sample <- sample_data(samdf) #makes a sample data table
+#note: sample data does NOT need to be a matrix to compile
 ```
 
 ### Making a Phyloseq object
 what goes in... what comes out...
-```{r}
-
+```{r Making the phyloseq object}
+ps <- phyloseq(otu, tax, sample) #make the phyloseq object from the components made in the last chunk
+ps #view the phyloseq object
+#this object should have 1195 taxa and 64 samples
+head(sample_data(ps)) #confirm that it worked; if it did, you should see the first few rows of the phyloseq object's sample data
 ```
 
 ### Exploring your Phyloseq object
 
 ```{r}
+#to view the sample data
+sample_data(ps)
 
+#to view the taxonomy table
+tax_table(ps) #this theoretically works but its harder to read
+data.frame(tax_table(ps)) #this is the better way to view the taxonomy table, since it is easier to read
+
+#to view the otu table
+otu_table(ps) #this doesn't work, it will give you the number of taxa and samples so if you need that info this is a good way to go, but it doesn't actually show the otu table
+data.frame(otu_table(ps)) #this is how you actually view the otu table data
 ```
 
 ### Filtering, subsetting, and pruning your phyloseq object
 
 ```{r}
-
+physeq.f<-filter_taxa(ps, function(x) sum(x >= 100) > (0.01*length(x)), prune = TRUE) #filter out super small numbers
+physeq.f #FIX????
+#subsetting your data by info from the sample data
+psup <- subset_samples(ps, Region=="Upper Keys")
+psup #this object should have 1195 taxa and 13 samples
+psmid <- subset_samples(ps, Region=="Middle Keys")
+psmid #this object should have 1195 taxa and 15 samples
+pslow <- subset_samples(ps, Region=="Lower Keys")
+pslow #this object should have 1195 taxa and 36 samples
 ```
 
 ### save.rds()

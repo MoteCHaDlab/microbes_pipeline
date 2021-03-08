@@ -18,31 +18,45 @@ library(vegan)
 ```
 
 ## Microbial Data
-
 ### File structures
-
+All of the data being loaded into R for this notebook, should be csv files
 ### Explanation of practice dataset we will use and getting it into R
-
-```{r Make the components of the phyloseq object}
+This dataset is data from a microbiome study on regional comparisons of Acropora cervicornis microbiomes from nurseries across the Upper, Middle, and Lower Keys. These corals originally came from reefs across the Upper, Middle, and Lower Keys as well. This dataset contains an abundance, or OTU table, a taxonomy table, and a table of the sample data, AKA the meta data.
+```{r Loading required csv files}
 otudf <- read.csv("acer_otu_table.csv",row.names = 1) #loads csv file into R as a dataframe
-#row.names = 1 is important, it sets the table's row names to the sample ID or taxa if taxa are rows so that it can be come a numeric matrix required for otu_table()
+#row.names = 1 is important for when this data is used later, because it sets the table's row names to the sample ID or taxa if taxa are rows so that it can be come a numeric matrix required later for otu_table()
+taxdf <- read.csv("acer_tax_table.csv", row.names = 1) #loads csv file into R as a dataframe
+#row.names = 1 is important for when this data is used later, because it sets the table's row names to the ASV, otherwise, it gets confused and sets the ID to the kingdom row
+samdf <- read.csv("acer_sample_data.csv",row.names = 1) #loads csv file into R as a dataframe
+#row.names = 1 is important for when this data is used later, because without it, r will not be able to match the sample names from the sample data to the otu table when building the phyloseq object
+```
+
+### What are the components of a phyloseq object?
+otu_table: Table of the abundance data, where sample IDs are rows and taxa (ASVs or OTUs) are columns or vice versa. Whether or not the taxa are rows depends on the analysis being done on the object. Be sure to set taxa_are_rows equal to TRUE if your taxa are rows.
+tax_table: Table of the taxonomy data, so the rows are ASVs or OTUs, and the columns are taxonomic rank (i.e. Kingdom, phylum, etc.)
+sample_data: Table of the metadata, explaining more information about your samples. This data MUST include sample IDs as the first row, and it MUST contain more than 2 columns or it will not compile.
+```{r Make the components of the phyloseq object}
+#################OTU_Table#########################
 otumat<- as.matrix(otudf) #otu_table() doesn't like dataframes so you need to convert to a matrix
 otu <- otu_table(otudf, taxa_are_rows = FALSE) #makes data into an otu table object
 #be sure to confirm whether or not your taxa are rows or columns, in this case they are rows
 
-taxdf <- read.csv("acer_tax_table.csv", row.names = 1) #loads csv file into R as a dataframe
-#row.names = 1 is important, it sets the table's row names to the ASV ID, otherwise, it gets confused and sets the ID to the kingdom row
+#################Tax_Table#########################
 taxmat <- as.matrix(taxdf) #tax_table needs matrices not dataframes 
 tax <- tax_table(taxmat) #makes data into a taxonomy table object
 
-samdf <- read.csv("acer_sample_data.csv",row.names = 1) #loads csv file into R as a dataframe
-#row.names = 1 is important because without it, r will not be able to match the sample names from the sample data to the otu table when building the phyloseq object
+#################Sample_Data########################
 sample <- sample_data(samdf) #makes a sample data table
 #note: sample data does NOT need to be a matrix to compile
 ```
 
 ### Making a Phyloseq object
-what goes in... what comes out...
+##### what goes in:
+  When making a phyloseq object, there are 2 components necessary to getting the phyloseq object to     compile. These are your taxonomy table and your phyloseq object (see the last chunk for how to create these components). However, in order to really do anything with your phyloseq object, you want to include a sample data table (see the last chunk for how to create this).                                     IMPORTANT NOTE: In order for these to compile, be sure your sample IDs and OTUs or ASVs match between tables
+
+##### what comes out:
+  When the phyloseq object is made, you get from it one object containing all of your abundance, sample, and taxonomy data. Those data are all linked so the abundance data and sample data overlap by sampleID, and the abundance data and taxonomy data overlap by OTUs or ASVs. This means that with the sampleID you can get data from 2 tables, and with the OTUs or ASVs you can get data from 2 tables. Phyloseq objects allow you to clean your data into 1 object containing all of your data, so you if you make edits to your data, you only have to load it in the beginning. 
+
 ```{r Making the phyloseq object}
 ps <- phyloseq(otu, tax, sample) #make the phyloseq object from the components made in the last chunk
 ps #view the phyloseq object
@@ -51,26 +65,27 @@ head(sample_data(ps)) #confirm that it worked; if it did, you should see the fir
 ```
 
 ### Exploring your Phyloseq object
-
-```{r}
+There are ways to view each component or your phyloseq object
+```{r Exploring the phyloseq object}
 #to view the sample data
 sample_data(ps)
 
 #to view the taxonomy table
-tax_table(ps) #this theoretically works but its harder to read
+head(tax_table(ps)) #this theoretically works but its harder to read
 data.frame(tax_table(ps)) #this is the better way to view the taxonomy table, since it is easier to read
 
 #to view the otu table
-otu_table(ps) #this doesn't work, it will give you the number of taxa and samples so if you need that info this is a good way to go, but it doesn't actually show the otu table
+head(otu_table(ps)) #this doesn't work, it will give you the number of taxa and samples so if you need that info this is a good way to go, but it doesn't actually show the otu table
 data.frame(otu_table(ps)) #this is how you actually view the otu table data
 ```
 
 ### Filtering, subsetting, and pruning your phyloseq object
-
+#### Filtering and pruning
+Sometimes, your phyloseq object is messy, from having a lot of taxa with little to no abundance at all included, for example from using raw abundances, or from having too many samples for what the tests or graphs you are running need, etc. There are many things you can do to clean your phyloseq object. This includes filtering it to exclude super small abundances, converting your raw abundance data to relative abundance data, or by merging samples.
 ```{r Filtering and pruning}
 #You can filter taxa to remove the smallest abundances with the line below
-physeq.f<-filter_taxa(ps, function(x) sum(x >= 100) > (0.01*length(x)), prune = TRUE) #filter out super small numbers
-physeq.f #FIX????
+physeq.f<-filter_taxa(ps, function(x) sum(x >= 100) > (0.01*length(x)), prune = TRUE) #filter out super small abundances
+physeq.f
 
 #You can also convert your data from raw abundance data to relative abundance data
 physeq.f.ra <- transform_sample_counts(ps, function(x) x*100/sum(x)) #transform to relative abundance from raw abundance
@@ -82,15 +97,12 @@ psregmerge <- merge_samples(ps,"Region")#the second part is the variable name be
 data.frame(otu_table(psregmerge)) #if done right, this data is now combines so there is 1 abundance row in the otu table for each region
 ```
 ##### subsetting
-complete list of R operators here: https://www.statmethods.net/management/operators.html
+Using the subset_samples() or subset_taxa() functions, you can subset your phyloseq object into a smaller part of the data, i.e. only the data from the upper keys. In order to do this, you need to know the different boolean operators in R.
+Complete list of R operators here: https://www.statmethods.net/management/operators.html
 ```{r Subsetting your data}
 #subsetting your data by info from the sample data, using ==
 psup <- subset_samples(ps, Region=="Upper Keys") #this subsets your data by region equals Upper Keys, so you only get Upper Keys
 psup #this object should have 1195 taxa and 13 samples
-psmid <- subset_samples(ps, Region=="Middle Keys") #this subsets your data by region equals Middle Keys, so you only get Middle Keys
-psmid #this object should have 1195 taxa and 15 samples
-pslow <- subset_samples(ps, Region=="Lower Keys") #this subsets your data by region equals Lower Keys, so you only get Lower Keys
-pslow #this object should have 1195 taxa and 36 samples
 
 ####subsetting you data by info from the sample data, using other boolean operators##########
 psnolow <- subset_samples(ps, Region!="Lower Keys") #this uses the != operator (AKA not equal to) to subset for everything except the lower keys
@@ -113,7 +125,9 @@ data.frame(tax_table(psrick))
 
 
 ### save.rds()
-```{r}
+This function allows you to save your phyloseq object to your working directory. This means that, in the future, you will only have to load your phyloseq object into R rather than 3 csv files. This saves a lot of time, keeps your folder cleaner, and makes working with others MUCH easier.
+INSERT WHAT IS AN RDS
+```{r saving your phyloseq object to your working directory}
 
 ```
 

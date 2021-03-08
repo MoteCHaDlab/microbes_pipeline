@@ -16,8 +16,8 @@ INSERT description of what code files are included here, like a table of content
 
 3/5/21: Samara's first github push
 
-3/8/21: Samara working on Intro to Phyloseq, CONCERN: filtering taxa filters it down to 17 taxa from 1195 taxa
 test 1 2 3
 
 Let's break github!!!! :)
 
+3/8/21: Samara working on Intro to Phyloseq, CONCERN: filtering taxa filters it down to 17 taxa from 1195 taxa, not sure what to include besides filtering out small taxa for filtering/pruning

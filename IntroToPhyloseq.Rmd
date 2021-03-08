@@ -66,9 +66,12 @@ data.frame(otu_table(ps)) #this is how you actually view the otu table data
 
 ### Filtering, subsetting, and pruning your phyloseq object
 
-```{r}
+```{r Filtering and pruning}
 physeq.f<-filter_taxa(ps, function(x) sum(x >= 100) > (0.01*length(x)), prune = TRUE) #filter out super small numbers
 physeq.f #FIX????
+```
+##### subsetting
+```{r Subsetting your data}
 #subsetting your data by info from the sample data
 psup <- subset_samples(ps, Region=="Upper Keys")
 psup #this object should have 1195 taxa and 13 samples
@@ -76,7 +79,13 @@ psmid <- subset_samples(ps, Region=="Middle Keys")
 psmid #this object should have 1195 taxa and 15 samples
 pslow <- subset_samples(ps, Region=="Lower Keys")
 pslow #this object should have 1195 taxa and 36 samples
+
+#subsetting your data by taxonomy
+psrick <- subset_taxa(ps, Order=="Rickettsiales")
+psrick
+data.frame(tax_table(psrick))
 ```
+
 
 ### save.rds()
 ```{r}

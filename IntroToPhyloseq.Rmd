@@ -10,7 +10,7 @@ explanation of package
 https://www.rdocumentation.org/packages/phyloseq/versions/1.16.2 <- link to rdocumentation/list of functions in the phyloseq package
 
 Packages you will need for doing basic microbial analyses:
-```{r}
+```{r Loading packages}
 library(phyloseq)
 library(ggplot2)
 library(vegan)

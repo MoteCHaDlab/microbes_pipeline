@@ -18,7 +18,7 @@ library(multcompView)
 ```
 
 ### Load the file(s) you need
-phyloseq!
+phyloseq! explain readRDS()?
 ```{r}
 
 ```
@@ -33,7 +33,7 @@ df$Region <- as.factor(df$Region) #the recent R update has trouble with assignin
 PERMANOVA <- adonis(d ~ Region, df) #run the permanova by region
 PERMANOVA
 ```
-Results and what they mean
+interpret?
 
 ### Multiple permanova
 what is multiple permanova versus a normal permanova, bonferroni adjustment, what does it show, what goes in/out
@@ -64,7 +64,7 @@ mult_perm<-data.frame(combinedtest) #save p-values to a dataframe
 mult_perm$pvaladj<-p.adjust(mult_perm$pvals,method="bonferroni") #use the bonferroni adjustment on the p-values and save it
 mult_perm #view results
 ```
-Results and what they mean
+interpret?
 
 ### nMDS plots
 what is an nMDS plot, what does it show, what goes in/out

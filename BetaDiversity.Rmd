@@ -1,0 +1,80 @@
+---
+title: "Beta Diversity"
+output: html_notebook
+---
+
+## Beta Diversity
+
+explanation
+
+
+### Packages you will need for doing beta diversity:
+```{r Loading packages}
+library(phyloseq)
+library(ggplot2)
+library(vegan)
+#... add any other standard packages.
+```
+
+### Load the file(s) you need
+phyloseq!
+```{r}
+
+```
+
+
+### Permanovas
+what is a permanova(adonis function), bray curtis distances, what does it show, what goes in/out
+```{r}
+df = as(sample_data(ps), "data.frame") #you need to convert it to a dataframe first
+d = phyloseq::distance(ps, "bray") #convert abundance to bray curtis distances
+df$Region <- as.factor(df$Region) #the recent R update has trouble with assigning proper formats to variables so this sets it as a factor (the proper format)
+PERMANOVA <- adonis(d ~ Region, df) #run the permanova by region
+PERMANOVA
+```
+Results and what they mean
+
+### Multiple permanova
+what is multiple permanova versus a normal permanova, bonferroni adjustment, what does it show, what goes in/out
+```{r}
+sampledf<-data.frame(sample_data(ps)) #convert to phyloseq object
+sampledf$Region<-as.factor(sampledf$Region) #the recent R update has trouble with assigning proper formats to variables so this sets it as a factor (the proper format)
+region.list<-levels(sampledf$Region) #make variable of list of levels (aka types) of region
+region.list #confirm it worked
+aovresults<-c() #set up variable for later use
+pvals<-c() #set up variable for later use
+locations<-c() #set up variable for later use
+for (i in 1:length(region.list)){ #for loop of the length of the region list, in this case 3
+  region.leftout<-region.list[i] #set one region to region.leftout
+  ps_sub<-subset_samples(ps,Region!=region.leftout) #subset the phyloseq object so it includes 2 of the three regions (aka all but the region.leftout)
+  d.sub<-phyloseq::distance(ps_sub, "bray") #permanova wants distances in bray curtis, convert to bray curtis
+  df.new<-subset(sampledf,subset=Region!=region.leftout) #make dataframe of sample data for only the 2 included regions
+  PERM<-adonis(d.sub~Region,df.new) #run permanova on the 2 regions
+  print(PERM) #see results
+  pvals<-c(pvals,PERM$aov.tab$'Pr(>F)'[1]) #this saves the p-values that were outputted. to confirm what this data calls its p-values, run a permanova and save the output to do str(output) to see what it call's the p-values that it outputs.
+  aovresults<-rbind(aovresults,PERM$aov.tab) #add/save current aov results
+  loc.sub<-region.list[-i]
+  locations<-rbind(locations,c(loc.sub)) #add/save list of current locations used
+}
+aovresults #see overall aov results
+combinedtest<-cbind(locations,pvals) #combine location and p-value data
+mult_perm<-data.frame(combinedtest) #save p-values to a dataframe
+#mult_perm
+mult_perm$pvaladj<-p.adjust(mult_perm$pvals,method="bonferroni") #use the bonferroni adjustment on the p-values and save it
+mult_perm #view results
+```
+Results and what they mean
+
+### nMDS plots
+what is an nMDS plot, what does it show, what goes in/out
+```{r}
+
+```
+
+
+### Betadisper
+what is betadisper, what does it show, what goes in/out
+```{r}
+
+```
+

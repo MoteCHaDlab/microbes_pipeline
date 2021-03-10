@@ -13,6 +13,7 @@ explanation
 library(phyloseq)
 library(ggplot2)
 library(vegan)
+library(multcompView)
 #... add any other standard packages.
 ```
 
@@ -68,13 +69,25 @@ Results and what they mean
 ### nMDS plots
 what is an nMDS plot, what does it show, what goes in/out
 ```{r}
-
+pMDS <- plot_ordination(ps, ordinate(ps, "NMDS","bray", autotransform = FALSE, parallel = 48, trymax = 10^4, maxit = 10^4), color = "Region") +  scale_colour_manual(values=c("Lower Keys" = "red", "Middle Keys" = "green", "Upper Keys" = "blue"))   + geom_point(size=2) + theme_set(theme_bw()) #the only things to adjust for other datasets here is the color = "Region" and the scale_color_manual(). you could also leave them out and R will not color or just leave out the scale_color_manual() and R will choose the colors
+print(pMDS)+stat_ellipse(aes(fill=Region)) #print the plot with 95% confidence ellipses
 ```
-
+interpret?
 
 ### Betadisper
 what is betadisper, what does it show, what goes in/out
 ```{r}
-
+sampledf<-data.frame(sample_data(ps))
+sampledf$Region <- as.factor(sampledf$Region)
+d_mat<-phyloseq::distance(ps, "bray")
+g_mod<-with(sampledf,betadisper(d_mat,Region))
+boxplot(g_mod)
+mod.tukey<-TukeyHSD(g_mod)
+mod.tukey
+labels <- multcompLetters(mod.tukey$group[, "p adj"])$Letters # Fix the order of the labels
+(labels <- labels[order(names(labels))])
+boundaries<-boxplot(g_mod)
+boundaries 
+text( x=c(1:3),y=boundaries$stats[nrow(boundaries$stats),] + 0.3, labels,col="red")
 ```
-
+interpret?

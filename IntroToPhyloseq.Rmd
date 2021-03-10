@@ -10,7 +10,8 @@ explanation of package
 https://www.rdocumentation.org/packages/phyloseq/versions/1.16.2 <- link to rdocumentation/list of functions in the phyloseq package
 
 Packages you will need for doing basic microbial analyses:
-```{r Loading packages}
+```{r Loading packages and set working directory}
+setwd("~/Mote_Coral_Fall2020/microbes_pipeline")
 library(phyloseq)
 library(ggplot2)
 library(vegan)
@@ -128,7 +129,7 @@ data.frame(tax_table(psrick))
 This function allows you to save your phyloseq object to your working directory. This means that, in the future, you will only have to load your phyloseq object into R rather than 3 csv files. This saves a lot of time, keeps your folder cleaner, and makes working with others MUCH easier.
 INSERT WHAT IS AN RDS
 ```{r saving your phyloseq object to your working directory}
-
+write_rds(ps,"examplePhyloseq.rds")
 ```
 
 

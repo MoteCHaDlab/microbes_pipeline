@@ -20,12 +20,13 @@ library(multcompView)
 ### Load the file(s) you need
 phyloseq! explain readRDS()?
 ```{r}
-
+ps <- readRDS("examplePhyloseq.rds")
+ps
 ```
 
 
 ### Permanovas
-what is a permanova(adonis function), bray curtis distances, what does it show, what goes in/out
+what is a permanova (adonis function), bray curtis distances, what does it show, what goes in/out
 ```{r}
 df = as(sample_data(ps), "data.frame") #you need to convert it to a dataframe first
 d = phyloseq::distance(ps, "bray") #convert abundance to bray curtis distances

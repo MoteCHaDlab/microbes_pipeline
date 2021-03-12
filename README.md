@@ -26,4 +26,7 @@ Let's break github!!!! :)
 
 3/10/21: Samara set up and started working on BetaDiversity, got save_rds() working (the line is write_RDS() in my computer)
 
-3/12/21: Samara fixed write_rds()/saveRDS() thing (the function exists after updating R)
+
+3/12/21: Samara fixed write_rds()/saveRDS() thing (the function exists after updating R) happened as sara did it too
+
+3/12/21: Sara made edits to the intro to phyloseq notebook

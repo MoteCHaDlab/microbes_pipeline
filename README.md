@@ -25,3 +25,5 @@ Let's break github!!!! :)
 3/9/21: Samara fixed a typo
 
 3/10/21: Samara set up and started working on BetaDiversity, got save_rds() working (the line is write_RDS() in my computer)
+
+3/12/21: Sara made edits to the intro to phyloseq notebook

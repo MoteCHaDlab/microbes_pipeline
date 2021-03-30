@@ -31,4 +31,4 @@ Let's break github!!!! :)
 
 3/12/21: Sara made edits to the intro to phyloseq notebook
 
-3/30/2021: Fixed betadisper code to include letters (it was a scale issue).
+3/30/2021: Samara fixed betadisper code to include letters (it was a scale issue) and started adding in the not code parts to the Beta Diversity notebook

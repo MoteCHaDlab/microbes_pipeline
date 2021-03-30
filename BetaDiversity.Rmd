@@ -1,5 +1,5 @@
 ---
-title: "Beta Diversity"
+title: "Calculating Beta Diversity"
 output: html_notebook
 ---
 
@@ -10,6 +10,7 @@ explanation
 
 ### Packages you will need for doing beta diversity:
 ```{r Loading packages}
+setwd("~/Mote_Coral_Fall2020/microbes_pipeline")
 library(phyloseq)
 library(ggplot2)
 library(vegan)
@@ -18,15 +19,22 @@ library(multcompView)
 ```
 
 ### Load the file(s) you need
-phyloseq! explain readRDS()?
+Phyloseq objects are a very useful way to contain all of the key items you need for microbiome analyses (OTU tables, sample data, and tax tables), as well as keeping your code cleaner, all without having to waste a lot of time loading in .csv files. Assuming they are saved as an .rds object in your working directory, you can load pre-made phyloseq objects into R using the readRDS() function. This function works just like the read.csv() function. All it requires is the name of the .rds object from your working directory in quotations.
 ```{r}
-ps <- readRDS("examplePhyloseq.rds")
-ps
+ps <- readRDS("examplePhyloseq.rds") #import the .rds phyloseq object made in the intro to phyloseq notebook
+ps #confirm it worked
 ```
 
 
 ### Permanovas
-what is a permanova (adonis function), bray curtis distances, what does it show, what goes in/out
+##### what does it show:
+A permanova, short for permutational multivariate analysis of variance, is a non-parametric multivariate test that compares groups of objects to each other. In microbiome analyses like this one, it is used to compare the contents of microbiomes between groups, the groups in this case being Region (Upper, Middle, and Lower Keys). The results of a permanova tell you whether or not your groups (i.e. Region) are statistically significantly different from each other. For a permanova to get more accurate results, you want to convert the data to Bray-Curtis Dissimilarity Distances. This is a distance metric that quantifies the dissimilarity between two groups, ranging from 0, where the groups are identical, to 1, where the groups have no similarities. 
+
+##### adonis function- what goes in/out:
+To run a permanova in R, use the adonis function from the package Vegan
+in: For the adonis function, you need your phyloseq object and to know the name of the column in your metadata that the groups you are comparing come from (i.e. Region).
+
+out: the adonis function prints the number of permutations as well as the degrees of freedom, Sums Of Squares, Mean Squares, F.Model, R2, and your p-value.
 ```{r}
 df = as(sample_data(ps), "data.frame") #you need to convert it to a dataframe first
 d = phyloseq::distance(ps, "bray") #convert abundance to bray curtis distances
@@ -34,7 +42,7 @@ df$Region <- as.factor(df$Region) #the recent R update has trouble with assignin
 PERMANOVA <- adonis(d ~ Region, df) #run the permanova by region
 PERMANOVA
 ```
-interpret?
+This permanova tested for differences between regions and returned a p-value of 0.001. This means that there is a statistically significant difference between the microbiomes of the Upper, Middle, and Lower Keys.
 
 ### Multiple permanova
 what is multiple permanova versus a normal permanova, bonferroni adjustment, what does it show, what goes in/out

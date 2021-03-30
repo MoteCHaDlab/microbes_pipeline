@@ -30,3 +30,5 @@ Let's break github!!!! :)
 3/12/21: Samara fixed write_rds()/saveRDS() thing (the function exists after updating R) happened as sara did it too
 
 3/12/21: Sara made edits to the intro to phyloseq notebook
+
+3/30/2021: Fixed betadisper code to include letters (it was a scale issue).

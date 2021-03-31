@@ -45,7 +45,13 @@ PERMANOVA
 This permanova tested for differences between regions and returned a p-value of 0.001. This means that there is a statistically significant difference between the microbiomes of the Upper, Middle, and Lower Keys.
 
 ### Multiple permanova
-what is multiple permanova versus a normal permanova, bonferroni adjustment, what does it show, what goes in/out
+##### what is multiple permanova versus a normal permanova and what does it show: 
+A multiple permanova is a pairwise version of a normal permanova. The key difference between the two being that the multiple permanova runs permanovas for only two of the options at any given time (e.g. Middle Keys vs Upper Keys, Lower Keys vs Upper Keys, Middle Keys vs Lower Keys). So for this data, the multiple permanova would give 3 p-values, one for each variation. A multiple permanovas can show which combination is driving any significance found by a permanova.
+##### bonferroni adjustment:
+When doing a multiple comparisons test like this one, it is important to include a bonferroni adjustment on your p-values. This adjusts the p-value based on how many tests were performed to help where a single false positive in a series of smaller tests, like the little permanovas run within a multiple permanova, could be an issue.
+##### what goes in/out:
+in: For a multiple permanova, you need your phyloseq object and to know what you are looking for differences by.
+out: The multiple permanova prints the normal permanova results for each of the permanovas run within the multiple permanova. It also gives a table where each row is a different combination (e.g. Middle Keys vs Upper Keys). Each row in this table has what the combination is as well as the original p-value and the bonferroni adjusted p-value.
 ```{r}
 sampledf<-data.frame(sample_data(ps)) #convert to phyloseq object
 sampledf$Region<-as.factor(sampledf$Region) #the recent R update has trouble with assigning proper formats to variables so this sets it as a factor (the proper format)
@@ -73,7 +79,7 @@ mult_perm<-data.frame(combinedtest) #save p-values to a dataframe
 mult_perm$pvaladj<-p.adjust(mult_perm$pvals,method="bonferroni") #use the bonferroni adjustment on the p-values and save it
 mult_perm #view results
 ```
-interpret?
+The multiple permanova showed significance between the Lower and Upper Keys and between the Lower and Middle Keys. This suggests that the Lower and Upper Keys and Lower and Middle Keys are different and driving the statistically significant difference found by the normal permanova, whereas the Middle and Upper Keys are not statistically significantly different.
 
 ### NMDS plots
 #### what is an NMDS plot and what does it show?

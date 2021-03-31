@@ -75,13 +75,18 @@ mult_perm #view results
 ```
 interpret?
 
-### nMDS plots
-what is an nMDS plot, what does it show, what goes in/out
+### NMDS plots
+#### what is an NMDS plot and what does it show?
+An NMDS, aka a Non-metric Multidimensional Scaling plot, graphs samples by their pairwise dissimilarities. These plots show the similarity/dissimilarity between samples. These plots can also show the grouping of samples by their similarity. Samples within the same circle, called a 95% confidence ellipse, have a 95% likelihood of being in the same group (i.e. Lower, Middle, or Upper Keys). These plots also work better if you convert your distances to Bray-Curtis distances, which is built in to the plot_ordination function we will be using.
+##### what goes in/out
+In R, we are going to use the plot_ordination function from the package Phyloseq. 
+in: For plot_ordination all you need is your phyloseq object and to know what you want to color/look at grouping by (e.g. Region).
+out: plot_ordination returns the stress values of every solution it tries to run, as well as the NMDS plot for the best solution.
 ```{r}
 pMDS <- plot_ordination(ps, ordinate(ps, "NMDS","bray", autotransform = FALSE, parallel = 48, trymax = 10^4, maxit = 10^4), color = "Region") +  scale_colour_manual(values=c("Lower Keys" = "red", "Middle Keys" = "green", "Upper Keys" = "blue"))   + geom_point(size=2) + theme_set(theme_bw()) #the only things to adjust for other datasets here is the color = "Region" and the scale_color_manual(). you could also leave them out and R will not color or just leave out the scale_color_manual() and R will choose the colors
 print(pMDS)+stat_ellipse(aes(fill=Region)) #print the plot with 95% confidence ellipses
 ```
-interpret?
+This NMDS graph shows 3 separate groups, one for each region, where the Lower and Upper Keys are the most similar to the Middle Keys and the most different from each other. This supports the permanova's findings that the Acer microbiomes are different by region.
 
 ### Betadisper
 what is betadisper, what does it show, what goes in/out

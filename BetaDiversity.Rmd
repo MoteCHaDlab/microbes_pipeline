@@ -4,9 +4,7 @@ output: html_notebook
 ---
 
 ## Beta Diversity
-
-explanation
-
+Beta diversity is the extent of change in community composition. Beta diversity is often used to look at compositional heterogeneity. There are many ways to look at beta diversity in statistics. In this code notebook, we will be exploring at the most common ways to look at beta diversity in microbiome analyses. This notebook looks at beta diversity through permanovas, multiple permanovas, NMDS plots, and the betadisper function in R.
 
 ### Packages you will need for doing beta diversity:
 ```{r Loading packages}

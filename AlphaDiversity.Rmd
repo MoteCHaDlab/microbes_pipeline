@@ -1,0 +1,73 @@
+---
+title: "Alpha diversity"
+output: html_notebook
+---
+
+# Alpha Diversity
+
+
+## Load packages needed
+```{r}
+
+```
+
+
+## Load the files needed
+```{r}
+
+```
+
+
+## Calculate and Save Alpha Diversity Metrics
+```{r}
+
+```
+
+
+##Plotting Alpha Diversity Metrics
+```{r}
+
+```
+
+
+### Plot Richness
+```{r}
+
+```
+
+
+### Plot Shannon Diversity
+```{r}
+
+```
+
+
+### Plot Inverse Simpson Diversity
+```{r}
+
+```
+
+
+## average, range, standard deviation, and standard error of the alpha diversity metrics
+```{r}
+
+```
+
+
+## check normality
+```{r}
+
+```
+
+
+## kruskal wallis
+```{r}
+
+```
+
+
+## multiple kruskal wallis
+```{r}
+
+```
+

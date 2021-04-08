@@ -22,18 +22,18 @@ library("vegan")
 ```{r}
 ps <- readRDS("examplePhyloseq.rds") #import the .rds phyloseq object made in the intro to phyloseq notebook
 ps #confirm it worked
-lowps<-subset_samples(ps,Region=="Lower Keys")
-lowps
-midps<-subset_samples(ps,Region=="Middle Keys")
-midps
-upps<-subset_samples(ps,Region=="Upper Keys")
-upps
+lowps<-subset_samples(ps,Region=="Lower Keys")#subset the phyloseq object to make a lower keys only phyloseq object
+lowps#check it worked
+midps<-subset_samples(ps,Region=="Middle Keys")#subset the phyloseq object to make a middle keys only phyloseq object
+midps#check it worked
+upps<-subset_samples(ps,Region=="Upper Keys")#subset the phyloseq object to make a upper keys only phyloseq object
+upps#check it worked
 ```
 
 
 ## Calculate and Save Alpha Diversity Metrics
 ```{r}
-myalphamets<-function(p){
+myalphamets<-function(p){ #make a function for calculating and saving alpha diversity metrics
     asvnew<-as.matrix((data.frame(otu_table(p))))#convert otu table to matrix
   samdf<-data.frame(sample_data(p))#convert sample data to a dataframe
   rich1 <- specnumber(asvnew)#calculates richness from css
@@ -48,14 +48,14 @@ myalphamets<-function(p){
   alp <- data.frame(alp)#back to dataframe from matrix
   alp#confirm it works
 }
-alpha_coral<-myalphamets(ps)
-alpha_coral
-lower_alpha<-myalphamets(lowps)
-lower_alpha
-middle_alpha<-myalphamets(midps)
-middle_alpha
-upper_alpha<-myalphamets(upps)
-upper_alpha
+alpha_coral<-myalphamets(ps) #run the function on the full dataset and save the output
+alpha_coral #check it worked
+lower_alpha<-myalphamets(lowps) #run the function on the lower keys dataset and save the output
+lower_alpha #check it worked
+middle_alpha<-myalphamets(midps) #run the function on the middle keys dataset and save the output
+middle_alpha #check it worked
+upper_alpha<-myalphamets(upps) #run the function on the upper keys dataset and save the output
+upper_alpha #check it worked
 ```
 
 
@@ -64,27 +64,27 @@ upper_alpha
 
 ### Plot Richness
 ```{r}
-  ric <- alpha_coral %>% ggplot(aes(Region,rich1)) + geom_boxplot() + xlab("Region") +  theme(text = element_text(size=12))+ylab("Species Richness") + ggtitle("Richness") + theme(axis.text.x = element_text(angle = 90,size=12)) +  theme(legend.text=element_text(size=12), legend.position = "right",text = element_text(size=12),strip.text= element_text(size=12)) + theme(axis.text.x = element_text(size=12))
-  ric
+  ric <- alpha_coral %>% ggplot(aes(Region,rich1)) + geom_boxplot() + xlab("Region") +  theme(text = element_text(size=12))+ylab("Species Richness") + ggtitle("Richness") + theme(axis.text.x = element_text(angle = 90,size=12)) +  theme(legend.text=element_text(size=12), legend.position = "right",text = element_text(size=12),strip.text= element_text(size=12)) + theme(axis.text.x = element_text(size=12)) #make a box plot with region on the x-axis, and species richness on the y-axis, saved in a variable so that it can be saved later with ggsave
+  ric #print the plot
 ```
 
 
 ### Plot Shannon Diversity
 ```{r}
-shandiv <- alpha_coral %>% ggplot(aes(Region,shannon1)) + geom_boxplot() + ggtitle("Shannon Diversity") + ylab("Shannon")+xlab("Region")+ylab("Shannon Diversity") + theme(text = element_text(size=10)) + theme(axis.text.x = element_text(angle = 90)) + theme(legend.text=element_text(size=12),  legend.position = "right",text = element_text(size=12),strip.text= element_text(size=12)) + theme(axis.text.x = element_text(size=12))
-  shandiv
+shandiv <- alpha_coral %>% ggplot(aes(Region,shannon1)) + geom_boxplot() + ggtitle("Shannon Diversity") + ylab("Shannon")+xlab("Region")+ylab("Shannon Diversity") + theme(text = element_text(size=10)) + theme(axis.text.x = element_text(angle = 90)) + theme(legend.text=element_text(size=12),  legend.position = "right",text = element_text(size=12),strip.text= element_text(size=12)) + theme(axis.text.x = element_text(size=12)) #make a box plot with region on the x-axis, and shannon diversity on the y-axis, saved in a variable so that it can be saved later with ggsave
+  shandiv #print the plot
 ```
 
 
 ### Plot Inverse Simpson Diversity
 ```{r}
-invsimp <- alpha_coral %>% ggplot(aes(Region, invsimp1)) + geom_boxplot() + ylab("Inverse Simpson Diversity") + xlab("Region") + theme(legend.position="none") + theme(text = element_text(size=12)) + theme(axis.text.x = element_text(angle = 90)) + ggtitle("Inverse Simpson Diversity")  +theme(legend.text=element_text(size=12), legend.position = "right",text = element_text(size=12),strip.text= element_text(size=12)) + theme(axis.text.x = element_text(size=12))
-  invsimp
+invsimp <- alpha_coral %>% ggplot(aes(Region, invsimp1)) + geom_boxplot() + ylab("Inverse Simpson Diversity") + xlab("Region") + theme(legend.position="none") + theme(text = element_text(size=12)) + theme(axis.text.x = element_text(angle = 90)) + ggtitle("Inverse Simpson Diversity")  +theme(legend.text=element_text(size=12), legend.position = "right",text = element_text(size=12),strip.text= element_text(size=12)) + theme(axis.text.x = element_text(size=12)) #make a box plot with region on the x-axis, and species richness on the y-axis, saved in a variable so that it can be saved later with ggsave
+  invsimp #print the plot
 ```
 
 #put the graphs together, i.e. make it pretty
 ```{r}
-ric + shandiv + invsimp + plot_layout(guides="collect")
+ric + shandiv + invsimp + plot_layout(guides="collect") #use patchwork to put the plots side by side to make it pretty
 ```
 
 

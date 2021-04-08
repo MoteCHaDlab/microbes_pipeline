@@ -33,7 +33,7 @@ upps#check it worked
 
 ## Calculate and Save Alpha Diversity Metrics
 ```{r}
-myalphamets<-function(p){ #make a function for calculating and saving alpha diversity metrics
+myalphamets<-function(p){ #make a function with one input of a phyloseq object
     asvnew<-as.matrix((data.frame(otu_table(p))))#convert otu table to matrix
   samdf<-data.frame(sample_data(p))#convert sample data to a dataframe
   rich1 <- specnumber(asvnew)#calculates richness from css
@@ -90,41 +90,41 @@ ric + shandiv + invsimp + plot_layout(guides="collect") #use patchwork to put th
 
 ## average, range, standard deviation, and standard error of the alpha diversity metrics
 ```{r}
-avgalpha <- function(alpha){
-    avg<-data.frame(matrix(nrow = 4,ncol = 6))
-    avg[1, ]<-c("alpha diversity metric","Mean","Median","range","standard deviation","standard error")
-    avg[ ,1]<-c("alpha diversity metric","richness","shannon","inv simp")
-    avg[2,2]<-mean(alpha$rich1)
-    avg[2,3]<-median(alpha$rich1)
-    range<-data.frame(range(alpha$rich1))
-    range<-as.character(range)
-    avg[2,4]<- as.character(interaction(range,sep="_"))
-    avg[2,5]<-sd(alpha$rich1)
-    avg[2,6]<-std.error(alpha$rich1)
+avgalpha <- function(alpha){ #make a function with 1 input of an alpha diversity dataframe made earlier
+    avg<-data.frame(matrix(nrow = 4,ncol = 6)) #make an empty dataframe of 4 rows and 6 columns
+    avg[1, ]<-c("alpha diversity metric","Mean","Median","range","standard deviation","standard error") #make a row of labels for the dataframe
+    avg[ ,1]<-c("alpha diversity metric","richness","shannon","inv simp") #make a column of labels for the dataframe
+    avg[2,2]<-mean(alpha$rich1) #input mean of richness
+    avg[2,3]<-median(alpha$rich1) #input median of richness
+    range<-data.frame(range(alpha$rich1)) #create a dataframe of range of richness (the range function has 2 outputs)
+    range<-as.character(range) #make the values in the range dataframe characters
+    avg[2,4]<- as.character(interaction(range,sep="_")) #input the range of richness into the main dataframe merged together
+    avg[2,5]<-sd(alpha$rich1) #input the standard deviation of richness
+    avg[2,6]<-std.error(alpha$rich1) #input the standard error of richness
     
-    avg[3,2]<-mean(alpha$shannon1)
-    avg[3,3]<-median(alpha$shannon1)
-    range<-data.frame(range(alpha$shannon1))
-    range<-as.character(range)
-    avg[3,4]<- as.character(interaction(range,sep="_"))
-    avg[3,5]<-sd(alpha$shannon1)
-    avg[3,6]<-std.error(alpha$shannon1)
+    avg[3,2]<-mean(alpha$shannon1) #input mean of shannon diversity
+    avg[3,3]<-median(alpha$shannon1) #input median of shannon diversity
+    range<-data.frame(range(alpha$shannon1)) #create a dataframe of range of shannon diversity
+    range<-as.character(range) #make the values in the range dataframe characters
+    avg[3,4]<- as.character(interaction(range,sep="_")) #input the range of shannon diversity into the main dataframe merged together
+    avg[3,5]<-sd(alpha$shannon1) #input the standard deviation of shannon diversity
+    avg[3,6]<-std.error(alpha$shannon1) #input the standard error of shannon diversity
     
-    avg[4,2]<-mean(alpha$invsimp1)
-    avg[4,3]<-median(alpha$invsimp1)
-    range<-data.frame(range(alpha$invsimp1))
-    range<-as.character(range)
-    avg[4,4]<- as.character(interaction(range,sep="_"))
-    avg[4,5]<-sd(alpha$invsimp1)
-    avg[4,6]<-std.error(alpha$invsimp1)
-    avg
+    avg[4,2]<-mean(alpha$invsimp1) #input mean of inverse simpson diversity
+    avg[4,3]<-median(alpha$invsimp1) #input median of inverse simpson diversity
+    range<-data.frame(range(alpha$invsimp1)) #create a dataframe of range of inverse simpson diversity
+    range<-as.character(range) #make the values in the range dataframe characters
+    avg[4,4]<- as.character(interaction(range,sep="_")) #input the range of inverse simpson diversity into the main dataframe merged together
+    avg[4,5]<-sd(alpha$invsimp1) #input the standard deviation of inverse simpson diversity
+    avg[4,6]<-std.error(alpha$invsimp1) # input the standard error of inverse simpson diversity
+    avg #output the filled dataframe
 }
-lowavgalp<-avgalpha(lower_alpha)
-lowavgalp
-midavgalp<-avgalpha(middle_alpha)
-midavgalp
-upavgalp<-avgalpha(upper_alpha)
-upavgalp
+lowavgalp<-avgalpha(lower_alpha) #run the created function on the lower keys alpha diversity data
+lowavgalp #print the results
+midavgalp<-avgalpha(middle_alpha) #run the created function on the middle keys alpha diversity data
+midavgalp #print the results
+upavgalp<-avgalpha(upper_alpha) #run the created function on the upper keys alpha diversity data
+upavgalp #print the results
 ```
 
 

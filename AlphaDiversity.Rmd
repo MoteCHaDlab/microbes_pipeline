@@ -130,10 +130,10 @@ upavgalp #print the results
 
 ## check normality
 ```{r}
-mod<-aov((rich1)~Region,data=alpha_coral) #no need for a transformation
-shapiro.test(mod$residuals)
-summary(mod)
-tuk.rich<-TukeyHSD(mod)
+mod<-aov((rich1)~Region,data=alpha_coral) #build an analysis of variance model for richness by region to test normality on
+shapiro.test(mod$residuals) #run the shapiro-wilk normality test on the model
+summary(mod) #view the details of the model (p-value etc.)
+tuk.rich<-TukeyHSD(mod) 
 tuk.rich
 multcompLetters(tuk.rich$Region[, "p adj"])$Letters
 
@@ -155,18 +155,17 @@ multcompLetters(tuk.rich$Region[, "p adj"])$Letters
 
 ## kruskal wallis
 ```{r}
-alpha_coral$Region<-as.factor(alpha_coral$Region)
-al2<-data.frame()
-a1<-(kruskal.test(rich1~Region,data=alpha_coral))
-a1list<-c(a1$data.name,a1$parameter,a1$statistic,a1$p.value)
-a2<-(kruskal.test(shannon1~Region,data=alpha_coral))
-a2list<-c(a2$data.name,a2$parameter,a2$statistic,a2$p.value)
-a3<-(kruskal.test(invsimp1~Region,data=alpha_coral))
-a3list<-c(a3$data.name,a3$parameter,a3$statistic,a3$p.value)
-ak<-data.frame(a1list,a2list,a3list)
-colnames(ak)<-ak[1,]
+alpha_coral$Region<-as.factor(alpha_coral$Region) #make sure region is a factor because kruskal tests won't run otherwise
+a1<-(kruskal.test(rich1~Region,data=alpha_coral)) #run a kruskal wallis test of richness by region and save it into the variable a1
+a1list<-c(a1$data.name,a1$parameter,a1$statistic,a1$p.value) #make a list of the equation (rich1~Region), the degrees of freedom, the kruskal-wallis chi-squared statistic, and the p-value 
+a2<-(kruskal.test(shannon1~Region,data=alpha_coral)) #run a kruskal wallis test of shannon diversity by region, and save it into the variable a2
+a2list<-c(a2$data.name,a2$parameter,a2$statistic,a2$p.value) #make a list of the equation (shannon1~Region), degrees of freedom, kruskal-wallis chi-squared statistic, and p-value
+a3<-(kruskal.test(invsimp1~Region,data=alpha_coral)) #run a kruskal wallis test of inverse simpson diversity by region, and save it into the variable a3
+a3list<-c(a3$data.name,a3$parameter,a3$statistic,a3$p.value) #make a list of the equation (invsimp1~Region), degrees of freedom, kruksal-wallis chi-squared statistic, and p-value
+ak<-data.frame(a1list,a2list,a3list) #combine the 3 lists into 1 dataframe
+colnames(ak)<-ak[1,] #set the column names to the first row
 rownames(ak)<-c("data.name","parameter","statistic","p.value")
-ak
+ak #set up the row names
 ```
 
 

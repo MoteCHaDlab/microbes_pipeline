@@ -1,111 +1,190 @@
 ---
-title: "Calculating Beta Diversity"
+title: "Determining Beta Diversity"
 output: html_notebook
 ---
 
 ## Beta Diversity
-Beta diversity is the extent of change in community composition. Beta diversity is often used to look at compositional heterogeneity. There are many ways to look at beta diversity in statistics. In this code notebook, we will be exploring at the most common ways to look at beta diversity in microbiome analyses. This notebook looks at beta diversity through permanovas, multiple permanovas, NMDS plots, and the betadisper function in R.
+Beta diversity is the extent of change in community composition. Beta diversity is often used to look at compositional heterogeneity. There are many ways to look at beta diversity in statistics. In this code notebook, we will be exploring the most common ways to look at beta diversity in microbiome analyses: PERMANOVAs, multiple PERMANOVAs, NMDS plots, and the betadisper function in R.
 
-### Packages you will need for doing beta diversity:
+While Alpha diversity describes the microbiome diversity *within* a sample/group, Beta diversity is a measure of diversity (similarity or dissimiliarity) *between* two or more communities. 
+
+### Packages you will need for beta diversity:
 ```{r Loading packages}
-setwd("~/Mote_Coral_Fall2020/microbes_pipeline")
 library(phyloseq)
 library(ggplot2)
 library(vegan)
 library(multcompView)
-#... add any other standard packages.
 ```
 
 ### Load the file(s) you need
+
 Phyloseq objects are a very useful way to contain all of the key items you need for microbiome analyses (OTU tables, sample data, and tax tables), as well as keeping your code cleaner, all without having to waste a lot of time loading in .csv files. Assuming they are saved as an .rds object in your working directory, you can load pre-made phyloseq objects into R using the readRDS() function. This function works just like the read.csv() function. All it requires is the name of the .rds object from your working directory in quotations.
+
 ```{r}
 ps <- readRDS("examplePhyloseq.rds") #import the .rds phyloseq object made in the intro to phyloseq notebook
-ps #confirm it worked
+ps #confirm it worked and look at structure again
 ```
+We are still working with the microbiome data of A. cervicornis nursery frags originally collected from the Upper, Middle, and Lower Keys.
 
+### PERMANOVAs
+#### what it tells us:
+A PERMANOVA, short for permutational multivariate analysis of variance, is a non-parametric multivariate test that compares groups of objects to each other. In microbiome analyses like this one, it is used to compare the contents of microbiomes between groups, the groups in this case being Region (Upper, Middle, and Lower Keys). 
 
-### Permanovas
-##### what does it show:
-A permanova, short for permutational multivariate analysis of variance, is a non-parametric multivariate test that compares groups of objects to each other. In microbiome analyses like this one, it is used to compare the contents of microbiomes between groups, the groups in this case being Region (Upper, Middle, and Lower Keys). The results of a permanova tell you whether or not your groups (i.e. Region) are statistically significantly different from each other. For a permanova to get more accurate results, you want to convert the data to Bray-Curtis Dissimilarity Distances. This is a distance metric that quantifies the dissimilarity between two groups, ranging from 0, where the groups are identical, to 1, where the groups have no similarities. 
+The results of a PERMANOVA tell you whether or not your groups (i.e. Region) are statistically significantly different from each other. First, you  convert the data to Bray-Curtis Dissimilarity Distances. This is a distance metric that quantifies the dissimilarity between two groups, ranging from 0, where the groups are identical, to 1, where the groups have no similarities. 
 
-##### adonis function- what goes in/out:
+Example methods description: "Differences in bacterial communities among samples due to collection region were tested using a permutational multivariate analysis of variance, PERMANOVA, of the Bray-Curtis dissimilarity (vegan package, Oksanen et al. 2007) for the rarefied dataset."
+
+#### adonis function- what goes in/out:
 To run a permanova in R, use the adonis function from the package Vegan
+
 in: For the adonis function, you need your phyloseq object and to know the name of the column in your metadata that the groups you are comparing come from (i.e. Region).
 
 out: the adonis function prints the number of permutations as well as the degrees of freedom, Sums Of Squares, Mean Squares, F.Model, R2, and your p-value.
+
 ```{r}
+#get your sample data
 df = as(sample_data(ps), "data.frame") #you need to convert it to a dataframe first
-d = phyloseq::distance(ps, "bray") #convert abundance to bray curtis distances
-df$Region <- as.factor(df$Region) #the recent R update has trouble with assigning proper formats to variables so this sets it as a factor (the proper format)
-PERMANOVA <- adonis(d ~ Region, df) #run the permanova by region
+
+#get your bray curtis distances 
+d = phyloseq::distance(ps, "bray") #convert counts to bray curtis distances
+
+df$Region <- as.factor(df$Region) #the recent R update has trouble with assigning proper formats to variables so this sets it as a factor (the proper format)... may or may not actually need this, but better safe than sorry.
+
+#run the permanova by region
+PERMANOVA <- adonis(d ~ Region, df) #so the equation reads as "dissimilarity metric as a function of region"
+
+#print your results
 PERMANOVA
 ```
-This permanova tested for differences between regions and returned a p-value of 0.001. This means that there is a statistically significant difference between the microbiomes of the Upper, Middle, and Lower Keys.
+This permanova tested for differences between regions and returned a p-value of 0.001. This means that there is a statistically significant difference between the microbiomes of the frags originally collected from the Upper, Middle, and Lower Keys.
 
-### Multiple permanova
-##### what is multiple permanova versus a normal permanova and what does it show: 
-A multiple permanova is a pairwise version of a normal permanova. The key difference between the two being that the multiple permanova runs permanovas for only two of the options at any given time (e.g. Middle Keys vs Upper Keys, Lower Keys vs Upper Keys, Middle Keys vs Lower Keys). So for this data, the multiple permanova would give 3 p-values, one for each variation. A multiple permanovas can show which combination is driving any significance found by a permanova.
-##### bonferroni adjustment:
-When doing a multiple comparisons test like this one, it is important to include a bonferroni adjustment on your p-values. This adjusts the p-value based on how many tests were performed to help where a single false positive in a series of smaller tests, like the little permanovas run within a multiple permanova, could be an issue.
-##### what goes in/out:
+### Multiple pairwise PERMANOVA tests
+
+#### Multiple PERMANOVAs versus a single PERMANOVA, what does it show: 
+A multiple PERMANOVA is a pairwise version of the PERMANOVA. The key difference between the two being that the multiple PERMANOVA runs PERMANOVAs for only two of the options at any given time (e.g. Middle Keys vs Upper Keys, Lower Keys vs Upper Keys, Middle Keys vs Lower Keys). So here, we end up with 3 p-values, one for each combination of regions. Multiple PERMANOVAs show specific differences between multiple levels of a comparison that you are interested in and that was shown to be significant in the initial test.
+
+Example methods description: "Multiple pairwise PERMANOVA tests were used to compare beta diversity between collection regions and p-values were adjusted using the Bonferroni correction."
+
+#### bonferroni adjustment:
+When doing a multiple comparisons test like this one, it is important to adjust your p-values for multiple comparisons. There are many p value adjustments, the Bonferroni adjustment is commonly used. It adjusts the p-value based on how many tests were performed and effectively lowers the alpha level for significance to account for the multiple comparisons. 
+
+#### what goes in/out:
 in: For a multiple permanova, you need your phyloseq object and to know what you are looking for differences by.
+
 out: The multiple permanova prints the normal permanova results for each of the permanovas run within the multiple permanova. It also gives a table where each row is a different combination (e.g. Middle Keys vs Upper Keys). Each row in this table has what the combination is as well as the original p-value and the bonferroni adjusted p-value.
+
 ```{r}
-sampledf<-data.frame(sample_data(ps)) #convert to phyloseq object
+#get data ready to go in
+sampledf<-data.frame(sample_data(ps)) #convert to df
 sampledf$Region<-as.factor(sampledf$Region) #the recent R update has trouble with assigning proper formats to variables so this sets it as a factor (the proper format)
+
+#Set up for the For loop
 region.list<-levels(sampledf$Region) #make variable of list of levels (aka types) of region
-region.list #confirm it worked
-aovresults<-c() #set up variable for later use
-pvals<-c() #set up variable for later use
-locations<-c() #set up variable for later use
-for (i in 1:length(region.list)){ #for loop of the length of the region list, in this case 3
-  region.leftout<-region.list[i] #set one region to region.leftout
+region.list #this will be what we iterate through in our for loop
+
+perm.results<-c() #set up empty variable to store all PERMANOVA results
+pvals<-c() #set up empty variable to store p values
+locations<-c() #set up empty variable to store comparison locations
+
+#for loop to run multiple PERMANOVAs by region
+for (i in 1:length(region.list)){ #for loop to iterate over the the length of the region list, in this case 3
+  #set up for PERMANOVA
+  region.leftout<-region.list[i] #set one region to ignore
   ps_sub<-subset_samples(ps,Region!=region.leftout) #subset the phyloseq object so it includes 2 of the three regions (aka all but the region.leftout)
-  d.sub<-phyloseq::distance(ps_sub, "bray") #permanova wants distances in bray curtis, convert to bray curtis
+  d.sub<-phyloseq::distance(ps_sub, "bray") #get bray curtis distances
   df.new<-subset(sampledf,subset=Region!=region.leftout) #make dataframe of sample data for only the 2 included regions
-  PERM<-adonis(d.sub~Region,df.new) #run permanova on the 2 regions
-  print(PERM) #see results
+  #run the PERMANOVA on just 2 regions at a time
+  PERM<-adonis(d.sub~Region,df.new) 
+  #print(PERM) #see results
+  
+  
   pvals<-c(pvals,PERM$aov.tab$'Pr(>F)'[1]) #this saves the p-values that were outputted. to confirm what this data calls its p-values, run a permanova and save the output to do str(output) to see what it call's the p-values that it outputs.
-  aovresults<-rbind(aovresults,PERM$aov.tab) #add/save current aov results
+  perm.results<-rbind(perm.results,PERM$aov.tab) #add/save current aov results
   loc.sub<-region.list[-i]
   locations<-rbind(locations,c(loc.sub)) #add/save list of current locations used
 }
-aovresults #see overall aov results
+
+#results
+perm.results #see overall aov results
+
 combinedtest<-cbind(locations,pvals) #combine location and p-value data
-mult_perm<-data.frame(combinedtest) #save p-values to a dataframe
+mult_perm<-data.frame(combinedtest) #converts to a dataframe
 #mult_perm
+#get the adjusted p values
 mult_perm$pvaladj<-p.adjust(mult_perm$pvals,method="bonferroni") #use the bonferroni adjustment on the p-values and save it
-mult_perm #view results
+
+#view results
+mult_perm 
 ```
 The multiple permanova showed significance between the Lower and Upper Keys and between the Lower and Middle Keys. This suggests that the Lower and Upper Keys and Lower and Middle Keys are different and driving the statistically significant difference found by the normal permanova, whereas the Middle and Upper Keys are not statistically significantly different.
 
-### NMDS plots
-#### what is an NMDS plot and what does it show?
-An NMDS, aka a Non-metric Multidimensional Scaling plot, graphs samples by their pairwise dissimilarities. These plots show the similarity/dissimilarity between samples. These plots can also show the grouping of samples by their similarity. Samples within the same circle, called a 95% confidence ellipse, have a 95% likelihood of being in the same group (i.e. Lower, Middle, or Upper Keys). These plots also work better if you convert your distances to Bray-Curtis distances, which is built in to the plot_ordination function we will be using.
-##### what goes in/out
+### nMDS plots
+
+#### what is an nMDS plot and what does it show?
+An NMDS, aka a non-metric Multidimensional Scaling plot, graphs samples by their pairwise dissimilarities. nMDS takes your data that is in a large multidimensional space and reduces it to a 2d space that can be visualized better. These plots show the similarity/dissimilarity between samples. These plots can also show the grouping of samples by their similarity. Samples within the same circle, called a 95% confidence ellipse, have a 95% likelihood of being in the same group (i.e. Lower, Middle, or Upper Keys). You should also use Bray-Curtis distances here, which is built in to the plot_ordination function we will be using.
+
+Example methods description: "To visually support the PERMANOVA results, non-metric Multidimensional Scaling analyses (nMDS) of the bacteria community composition based on the Bray-Curtis dissimilarity were performed."
+
+#### what goes in/out
 In R, we are going to use the plot_ordination function from the package Phyloseq. 
+
 in: For plot_ordination all you need is your phyloseq object and to know what you want to color/look at grouping by (e.g. Region).
-out: plot_ordination returns the stress values of every solution it tries to run, as well as the NMDS plot for the best solution.
+
+out: plot_ordination returns the stress values of every solution it tries to run, as well as the NMDS plot for the best solution. Note that it does take some time to run.
 ```{r}
-pMDS <- plot_ordination(ps, ordinate(ps, "NMDS","bray", autotransform = FALSE, parallel = 48, trymax = 10^4, maxit = 10^4), color = "Region") +  scale_colour_manual(values=c("Lower Keys" = "red", "Middle Keys" = "green", "Upper Keys" = "blue"))   + geom_point(size=2) + theme_set(theme_bw()) #the only things to adjust for other datasets here is the color = "Region" and the scale_color_manual(). you could also leave them out and R will not color or just leave out the scale_color_manual() and R will choose the colors
+pMDS <- plot_ordination(ps, #this is your phyloseq object
+                        ordinate(ps, "NMDS","bray", autotransform = FALSE, parallel = 48, trymax = 10^4, maxit = 10^4), #this bit is the ordination part
+                        color = "Region") + #color the points by region
+  scale_colour_manual(values=c("Lower Keys" = "red", "Middle Keys" = "purple", "Upper Keys" = "blue"))+ #set colors to what you want
+  geom_point(size=2) + #set size of the points
+  theme_set(theme_bw()) #make plot pretty
+  
+
+#the only things to adjust for other datasets here is the color = "Region" and the scale_color_manual(). you could also leave them out and R will not color or just leave out the scale_color_manual() and R will choose the colors
+
 print(pMDS)+stat_ellipse(aes(fill=Region)) #print the plot with 95% confidence ellipses
 ```
-This NMDS graph shows 3 separate groups, one for each region, where the Lower and Upper Keys are the most similar to the Middle Keys and the most different from each other. This supports the permanova's findings that the Acer microbiomes are different by region.
+This nMDS graph shows 3 separate groups, one for each region, where the Lower and Upper Keys are the most similar to the Middle Keys and the most different from each other. This supports the permanova's findings that the Acer microbiomes are different by region, but that there is some overlab between the upper and middle keys.
 
 ### Betadisper
-what is betadisper, what does it show, what goes in/out
+
+betadisper is a multivariate analogue of Levene's test for homogeneity of variances. Non-euclidean distances between objects and group centroids are handled by reducing the original distances to principal coordinates.
+ 
+Example methods description:  "We tested for homogeneity of group dispersion with betadisper using a Euclidean distance, and pairwise comparisons were conducted with a Tukey multiple comparison test."
+
+#### What goes in/out:
+
+in: the bray curtis disimilarity distances, the sample data, and the factor being compared (Region)
+
+Out: The actual betadisper function returns information about the homogeneity of multivariate dispersions... you then use the results in a boxplot to visualize the differences and run a post-hoc pairwiase comparison test, i.e. a Tukey, to determine significant differences among the groups.
+
 ```{r}
+#get data prepped to go in
 sampledf<-data.frame(sample_data(ps))
 sampledf$Region <- as.factor(sampledf$Region)
 d_mat<-phyloseq::distance(ps, "bray")
+
+#run the betadisper function
 g_mod<-with(sampledf,betadisper(d_mat,Region))
+g_mod
+
+#visualize results as boxplot
 boxplot(g_mod)
+
+#run the post-hoc test
 mod.tukey<-TukeyHSD(g_mod)
 mod.tukey
-labels <- multcompLetters(mod.tukey$group[, "p adj"])$Letters # Fix the order of the labels
+
+#get labels for the tukey
+labels <- multcompLetters(mod.tukey$group[, "p adj"])$Letters 
+# Fix the order of the labels
 (labels <- labels[order(names(labels))])
-boundaries<-boxplot(g_mod, ylim = c(0,.25))
-boundaries 
-text( x=c(1:3),y=boundaries$stats[nrow(boundaries$stats),] + 0.05, labels,col="red")
+
+#remake boxplot with labels
+bp<-boxplot(g_mod, ylim = c(0,.25))
+text( x=c(1:3),y=bp$stats[nrow(boundaries$stats),] + 0.05, labels,col="red") #add labels
+
+#"y=bp$stats[nrow(boundaries$stats),] + 0.05" makes it so that the label goes just above the upper outlier
 ```
-interpret?
+Supports the results of the nMDS analysis, though is slightly contradictory to the multiple PERMANOVA tests- only the lower and upper keys are significantly different. 
+

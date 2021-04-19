@@ -108,8 +108,9 @@ for (i in 1:length(region.list)){ #for loop to iterate over the the length of th
 perm.results #see overall aov results
 
 combinedtest<-cbind(locations,pvals) #combine location and p-value data
+combinedtest
 mult_perm<-data.frame(combinedtest) #converts to a dataframe
-#mult_perm
+mult_perm
 #get the adjusted p values
 mult_perm$pvaladj<-p.adjust(mult_perm$pvals,method="bonferroni") #use the bonferroni adjustment on the p-values and save it
 
@@ -145,6 +146,8 @@ pMDS <- plot_ordination(ps, #this is your phyloseq object
 print(pMDS)+stat_ellipse(aes(fill=Region)) #print the plot with 95% confidence ellipses
 ```
 This nMDS graph shows 3 separate groups, one for each region, where the Lower and Upper Keys are the most similar to the Middle Keys and the most different from each other. This supports the permanova's findings that the Acer microbiomes are different by region, but that there is some overlab between the upper and middle keys.
+
+Stress value: how well the model works... if it's too high = bad.
 
 ### Betadisper
 

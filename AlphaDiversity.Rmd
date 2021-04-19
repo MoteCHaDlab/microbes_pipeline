@@ -5,16 +5,23 @@ output: html_notebook
 
 # Alpha Diversity
 
+Alpha diversity describes the microbiome diversity *within* a sample/group. Common measures of alpha diversity are:
+
+- Richness
+- Evenness
+- Shannon Diversity Index
+- Inverse Simpson Diversity Index
+
+See the vegan::diversity-vegan R vignette for details on metric calculation.
 
 ## Load packages needed
 ```{r}
-library("ggplot2")
-library("multcompView")
-library("patchwork")
-library("phyloseq")
-library("plotrix")
-library("tidyverse")
-library("vegan")
+library("ggplot2") #for plotting
+library("multcompView") #for Tukey post-hoc test
+library("patchwork") #for plotting
+library("phyloseq") #for microbial data
+library("tidyverse") #for data filtering
+library("vegan") #for stats
 ```
 
 
@@ -22,238 +29,185 @@ library("vegan")
 ```{r}
 ps <- readRDS("examplePhyloseq.rds") #import the .rds phyloseq object made in the intro to phyloseq notebook
 ps #confirm it worked
-lowps<-subset_samples(ps,Region=="Lower Keys")#subset the phyloseq object to make a lower keys only phyloseq object
-lowps#check it worked
-midps<-subset_samples(ps,Region=="Middle Keys")#subset the phyloseq object to make a middle keys only phyloseq object
-midps#check it worked
-upps<-subset_samples(ps,Region=="Upper Keys")#subset the phyloseq object to make a upper keys only phyloseq object
-upps#check it worked
 ```
 
 
 ## Calculate and Save Alpha Diversity Metrics
 ```{r}
-myalphamets<-function(p){ #make a function with one input of a phyloseq object
-    asvnew<-as.matrix((data.frame(otu_table(p))))#convert otu table to matrix
-  samdf<-data.frame(sample_data(p))#convert sample data to a dataframe
-  rich1 <- specnumber(asvnew)#calculates richness from css
-  length(rich1)#check the length of the richness calculated
-  shannon1 <- vegan::diversity(asvnew,"shannon")#calculates the shannon diversity using the function in vegan
-  length(shannon1)#check the length of the shannon diversity calculated
-  invsimp1 <- vegan::diversity(asvnew, "inv")#calculates the inverse simpson diversity using the function in vegan
-  length(invsimp1)#check the length of the inverse simpson diversity calculated
-  alp <- data.frame()#make empty dataframe to put the calculated alpha diversity into
-  alp <- cbind(rich1, shannon1, invsimp1,samdf)#put the calculated alpha diversity into the dataframe
-  alp <- rownames_to_column(alp, var = "id")
-  alp <- data.frame(alp)#back to dataframe from matrix
-  alp#confirm it works
-}
+#get data into correct format for calculation
+asvtab<-as.matrix((data.frame(otu_table(ps))))#convert otu table to matrix
+samdf<-data.frame(sample_data(ps))#convert sample data to a dataframe
+
+#richness
+rich <- specnumber(asvtab)
+length(rich)#check the length, should be the same as the number of samples
+
+#Shannon diversity
+shan.div <- vegan::diversity(asvtab,"shannon")
+
+#Inverse Simpson
+inv.simp <- vegan::diversity(asvtab, "inv")
+
+#combine them all into one dataframe with the sample data
+alp <- cbind(rich, shan.div, inv.simp,samdf)
+alp <- rownames_to_column(alp, var = "id") #add the rownames as a column
+alphamets <- data.frame(alp)#back to dataframe from matrix
+alphamets
+
+#use the function wrapper from the AlphaDiv_wrapperfuncs.R script to save yourself some time (and lines of code)
+source("AlphaDiv_wrapperfuncs.R")
+
 alpha_coral<-myalphamets(ps) #run the function on the full dataset and save the output
 alpha_coral #check it worked
-lower_alpha<-myalphamets(lowps) #run the function on the lower keys dataset and save the output
-lower_alpha #check it worked
-middle_alpha<-myalphamets(midps) #run the function on the middle keys dataset and save the output
-middle_alpha #check it worked
-upper_alpha<-myalphamets(upps) #run the function on the upper keys dataset and save the output
-upper_alpha #check it worked
+```
+## Statistics
+
+### average and standard error of the alpha diversity metrics
+```{r}
+#If you just want the mean and the standard error of one metric at a time:
+aggregate(rich1~Region,FUN=mean,data=alpha_coral) #mean
+aggregate(rich1~Region,FUN=function(x) sd(x)/sqrt(length(x)),data=alpha_coral) #se
+
+#now use the wrapper function to get everything at once
+alpha.summary(ps,sample_data(ps)$Region) #must put in phyloseq object and then the sampledata variable that you are interested in
+
 ```
 
+### Does alpha diversity vary by region?
 
-##Plotting Alpha Diversity Metrics
+Use anovas (analysis of variance model) to test for significant differences among groups.
+```{r}
 
+####### richness: ##########
+
+#the anova model
+mod<-aov((rich1)~Region,data=alpha_coral)
+
+#test for normality using shapiro-wilks
+shapiro.test(mod$residuals) #if p<0.05, then the data is not NORMAL
+#it wasn't normal
+mod<-aov(log(rich1)~Region,data=alpha_coral) #try a log transformation
+shapiro.test(mod$residuals) #now we're normal.
+
+#get anova results
+summary(mod) #region is significantly different
+
+#do the multiple comparison tests (tukey)
+tuk.rich<-TukeyHSD(mod)
+tuk.rich #the lower keys are sig different from middle and upper
+rich.letters<-multcompLetters(tuk.rich$Region[, "p adj"])$Letters #save letters for plotting
+
+###### shannon: #######
+mod<-aov((shannon1)~Region,data=alpha_coral) 
+shapiro.test(mod$residuals) #normal
+summary(mod) #region is significant
+tuk.shan<-TukeyHSD(mod)
+tuk.shan #upper sig dif from lower
+shan.letters<-multcompLetters(tuk.shan$Region[, "p adj"])$Letters
+
+####### inverse simpson: #######
+mod<-aov((invsimp1)~Region,data=alpha_coral)
+shapiro.test(mod$residuals) #Not normal
+mod<-aov(log(invsimp1)~Region,data=alpha_coral) #try with log transform
+shapiro.test(mod$residuals) #Now we're good
+summary(mod) #region is sig dif
+tuk.simp<-TukeyHSD(mod)
+tuk.simp #lower sig dif from middle and upper
+simp.letters<-multcompLetters(tuk.simp$Region[, "p adj"])$Letters
+```
+
+## Plotting Alpha Diversity Metrics
 
 ### Plot Richness
 ```{r}
-  ric <- alpha_coral %>% ggplot(aes(Region,rich1)) + geom_boxplot() + xlab("Region") +  theme(text = element_text(size=12))+ylab("Species Richness") + ggtitle("Richness") + theme(axis.text.x = element_text(angle = 90,size=12)) +  theme(legend.text=element_text(size=12), legend.position = "right",text = element_text(size=12),strip.text= element_text(size=12)) + theme(axis.text.x = element_text(size=12)) #make a box plot with region on the x-axis, and species richness on the y-axis, saved in a variable so that it can be saved later with ggsave
-  ric #print the plot
-```
+#make a box plot with region on the x-axis, and species richness on the y-axis, saved in a variable so that it can be saved later or used with patchwork
 
+ric <- alpha_coral %>% ggplot(aes(Region,rich1)) + 
+  geom_boxplot() + 
+  xlab("") +  
+  theme(text = element_text(size=12))+
+  ylab("Species Richness") + 
+  #ggtitle("Richness") + 
+  theme(axis.text.x = element_text(angle = 90))+
+  annotate(geom="text",x=c(1,2,3),y=c(70,70,70),label=rich.letters[order(names(rich.letters))],color="red")
+#you will need to adjust the annotate line individually, as I took the easy way out when coding this instead of making it work with anything
+ric #print the plot
+```
 
 ### Plot Shannon Diversity
 ```{r}
-shandiv <- alpha_coral %>% ggplot(aes(Region,shannon1)) + geom_boxplot() + ggtitle("Shannon Diversity") + ylab("Shannon")+xlab("Region")+ylab("Shannon Diversity") + theme(text = element_text(size=10)) + theme(axis.text.x = element_text(angle = 90)) + theme(legend.text=element_text(size=12),  legend.position = "right",text = element_text(size=12),strip.text= element_text(size=12)) + theme(axis.text.x = element_text(size=12)) #make a box plot with region on the x-axis, and shannon diversity on the y-axis, saved in a variable so that it can be saved later with ggsave
-  shandiv #print the plot
+#make a box plot with region on the x-axis, and shannon diversity on the y-axis, saved in a variable so that it can be saved later with ggsave
+shandiv <- alpha_coral %>% ggplot(aes(Region,shannon1)) + 
+  geom_boxplot() + 
+  #ggtitle("Shannon Diversity") + 
+  xlab("")+
+  ylab("Shannon Diversity") + 
+  theme(text = element_text(size=12)) + 
+  theme(axis.text.x = element_text(angle = 90))+
+  annotate(geom="text",x=c(1,2,3),y=c(0.75,0.75,0.75),label=shan.letters[order(names(shan.letters))],color="red")
+
+shandiv #print the plot
 ```
 
 
 ### Plot Inverse Simpson Diversity
 ```{r}
-invsimp <- alpha_coral %>% ggplot(aes(Region, invsimp1)) + geom_boxplot() + ylab("Inverse Simpson Diversity") + xlab("Region") + theme(legend.position="none") + theme(text = element_text(size=12)) + theme(axis.text.x = element_text(angle = 90)) + ggtitle("Inverse Simpson Diversity")  +theme(legend.text=element_text(size=12), legend.position = "right",text = element_text(size=12),strip.text= element_text(size=12)) + theme(axis.text.x = element_text(size=12)) #make a box plot with region on the x-axis, and species richness on the y-axis, saved in a variable so that it can be saved later with ggsave
-  invsimp #print the plot
+#make a box plot with region on the x-axis, and species richness on the y-axis, saved in a variable so that it can be saved later with ggsave
+
+invsimp <- alpha_coral %>% ggplot(aes(Region, invsimp1)) + 
+  geom_boxplot() + 
+  ylab("Inverse Simpson Diversity") + 
+  xlab("") + 
+  theme(text = element_text(size=12)) + 
+  theme(axis.text.x = element_text(angle = 90))+
+    annotate(geom="text",x=c(1,2,3),y=c(1.7,1.7,1.7),label=simp.letters[order(names(simp.letters))],color="red")
+
+invsimp #print the plot
 ```
 
-#put the graphs together, i.e. make it pretty
+#### put the graphs together into one multi-panel figure using Patchwork
 ```{r}
-ric + shandiv + invsimp + plot_layout(guides="collect") #use patchwork to put the plots side by side to make it pretty
+ric + shandiv + invsimp 
 ```
+## Back to stats real quick.
+
+If your data are very not normal and the usual transformations are not working, then you will need to resort to using a kruskal wallis test, the non-parametric version of an ANOVA.
 
 
-## average, range, standard deviation, and standard error of the alpha diversity metrics
 ```{r}
-avgalpha <- function(alpha){ #make a function with 1 input of an alpha diversity dataframe made earlier
-    avg<-data.frame(matrix(nrow = 4,ncol = 6)) #make an empty dataframe of 4 rows and 6 columns
-    avg[1, ]<-c("alpha diversity metric","Mean","Median","range","standard deviation","standard error") #make a row of labels for the dataframe
-    avg[ ,1]<-c("alpha diversity metric","richness","shannon","inv simp") #make a column of labels for the dataframe
-    avg[2,2]<-mean(alpha$rich1) #input mean of richness
-    avg[2,3]<-median(alpha$rich1) #input median of richness
-    range<-data.frame(range(alpha$rich1)) #create a dataframe of range of richness (the range function has 2 outputs)
-    range<-as.character(range) #make the values in the range dataframe characters
-    avg[2,4]<- as.character(interaction(range,sep="_")) #input the range of richness into the main dataframe merged together
-    avg[2,5]<-sd(alpha$rich1) #input the standard deviation of richness
-    avg[2,6]<-std.error(alpha$rich1) #input the standard error of richness
-    
-    avg[3,2]<-mean(alpha$shannon1) #input mean of shannon diversity
-    avg[3,3]<-median(alpha$shannon1) #input median of shannon diversity
-    range<-data.frame(range(alpha$shannon1)) #create a dataframe of range of shannon diversity
-    range<-as.character(range) #make the values in the range dataframe characters
-    avg[3,4]<- as.character(interaction(range,sep="_")) #input the range of shannon diversity into the main dataframe merged together
-    avg[3,5]<-sd(alpha$shannon1) #input the standard deviation of shannon diversity
-    avg[3,6]<-std.error(alpha$shannon1) #input the standard error of shannon diversity
-    
-    avg[4,2]<-mean(alpha$invsimp1) #input mean of inverse simpson diversity
-    avg[4,3]<-median(alpha$invsimp1) #input median of inverse simpson diversity
-    range<-data.frame(range(alpha$invsimp1)) #create a dataframe of range of inverse simpson diversity
-    range<-as.character(range) #make the values in the range dataframe characters
-    avg[4,4]<- as.character(interaction(range,sep="_")) #input the range of inverse simpson diversity into the main dataframe merged together
-    avg[4,5]<-sd(alpha$invsimp1) #input the standard deviation of inverse simpson diversity
-    avg[4,6]<-std.error(alpha$invsimp1) # input the standard error of inverse simpson diversity
-    avg #output the filled dataframe
-}
-lowavgalp<-avgalpha(lower_alpha) #run the created function on the lower keys alpha diversity data
-lowavgalp #print the results
-midavgalp<-avgalpha(middle_alpha) #run the created function on the middle keys alpha diversity data
-midavgalp #print the results
-upavgalp<-avgalpha(upper_alpha) #run the created function on the upper keys alpha diversity data
-upavgalp #print the results
+alpha_coral$Region<-as.factor(alpha_coral$Region) #make sure region is a factor 
+
+kruskal.test(rich1~Region,data=alpha_coral) #run a kruskal wallis test of richness by region 
+
 ```
+Ok, so it's significant, but how do you now test for differences between specific regions like we were able to do with the Tukey? You use multiple kruskal wallis test and adjust the pvalues for multiple comparisons.
 
-
-## check normality
+Let's run through an example with richness:
 ```{r}
-mod<-aov((rich1)~Region,data=alpha_coral) #build an analysis of variance model for richness by region to test normality on
-shapiro.test(mod$residuals) #run the shapiro-wilk normality test on the model
-summary(mod) #view the details of the model (p-value etc.)
-tuk.rich<-TukeyHSD(mod) 
-tuk.rich
-multcompLetters(tuk.rich$Region[, "p adj"])$Letters
-
-mod<-aov((shannon1)~Region,data=alpha_coral) #no need for a transformation
-shapiro.test(mod$residuals)
-summary(mod)
-tuk.rich<-TukeyHSD(mod)
-tuk.rich
-multcompLetters(tuk.rich$Region[, "p adj"])$Letters
-
-mod<-aov((invsimp1)~Region,data=alpha_coral) #no need for a transformation
-shapiro.test(mod$residuals)
-summary(mod)
-tuk.rich<-TukeyHSD(mod)
-tuk.rich
-multcompLetters(tuk.rich$Region[, "p adj"])$Letters
-```
-
-
-## kruskal wallis
-```{r}
-alpha_coral$Region<-as.factor(alpha_coral$Region) #make sure region is a factor because kruskal tests won't run otherwise
-a1<-(kruskal.test(rich1~Region,data=alpha_coral)) #run a kruskal wallis test of richness by region and save it into the variable a1
-a1list<-c(a1$data.name,a1$parameter,a1$statistic,a1$p.value) #make a list of the equation (rich1~Region), the degrees of freedom, the kruskal-wallis chi-squared statistic, and the p-value 
-a2<-(kruskal.test(shannon1~Region,data=alpha_coral)) #run a kruskal wallis test of shannon diversity by region, and save it into the variable a2
-a2list<-c(a2$data.name,a2$parameter,a2$statistic,a2$p.value) #make a list of the equation (shannon1~Region), degrees of freedom, kruskal-wallis chi-squared statistic, and p-value
-a3<-(kruskal.test(invsimp1~Region,data=alpha_coral)) #run a kruskal wallis test of inverse simpson diversity by region, and save it into the variable a3
-a3list<-c(a3$data.name,a3$parameter,a3$statistic,a3$p.value) #make a list of the equation (invsimp1~Region), degrees of freedom, kruksal-wallis chi-squared statistic, and p-value
-ak<-data.frame(a1list,a2list,a3list) #combine the 3 lists into 1 dataframe
-colnames(ak)<-ak[1,] #set the column names to the first row
-rownames(ak)<-c("data.name","parameter","statistic","p.value")
-ak #set up the row names
-```
-
-
-## multiple kruskal wallis
-#### richness pairwise kruskal wallis
-```{r}
+#set it up just like we set up the multiple permanova test
 sampledf<-data.frame(sample_data(ps))
 sampledf$Region<-as.factor(sampledf$Region)
+
 region.list<-levels(sampledf$Region)
 region.list
-aovresults<-c()
+
 pvals<-c()
 locations<-c()
 for (i in 1:length(region.list)){
   region.leftout<-region.list[i]
-  alph_sub<-subset(alpha_coral,Region!=region.leftout) #instead of subset_samples use a subset() for the dataframe you are working with
-  #d.sub<-phyloseq::distance(ps_sub, "bray") # won't need this for kruskal
-  #df.new<-subset(sampledf,subset=Region!=region.leftout) # won't need this either
-  PERM<-kruskal.test(rich1~Region,alph_sub) #change to kruskal
-  print(PERM)
-  pvals<-c(pvals,PERM$'p.value') #this will change. run a kruskal and save the output to do str(output) to see what it call's the pvalues that it outputs.
-  #aovresults<-rbind(aovresults,PERM$aov.tab) 
-  loc.sub<-region.list[-i]
-  locations<-rbind(locations,c(loc.sub))
+  alph_sub<-subset(alpha_coral,Region!=region.leftout) #subset the alpha metrics to just two locations
+  kwt<-kruskal.test(rich1~Region,alph_sub) #kruskal wallis test
+  print(kwt)
+  pvals<-c(pvals,kwt$'p.value') #save the pval 
+  locations<-rbind(locations,c(region.list[-i]))#save the locations tested
 }
-aovresults
 combinedtest<-cbind(locations,pvals)
-mult_perm<-data.frame(combinedtest)
-mult_perm
-mult_perm$pvaladj<-p.adjust(mult_perm$pvals,method="bonferroni")
-mult_perm
+mult_kwt<-data.frame(combinedtest)
+mult_kwt$pvaladj<-p.adjust(mult_kwt$pvals,method="bonferroni")
+mult_kwt
 ```
 
-#### shannon diversity pairwise kruskal wallis
-```{r}
-sampledf<-data.frame(sample_data(ps))
-sampledf$Region<-as.factor(sampledf$Region)
-region.list<-levels(sampledf$Region)
-region.list
-aovresults<-c()
-pvals<-c()
-locations<-c()
-for (i in 1:length(region.list)){
-  region.leftout<-region.list[i]
-  alph_sub<-subset(alpha_coral,Region!=region.leftout) #instead of subset_samples use a subset() for the dataframe you are working with
-  #d.sub<-phyloseq::distance(ps_sub, "bray") # won't need this for kruskal
-  #df.new<-subset(sampledf,subset=Region!=region.leftout) # won't need this either
-  PERM<-kruskal.test(shannon1~Region,alph_sub) #change to kruskal
-  print(PERM)
-  pvals<-c(pvals,PERM$'p.value') #this will change. run a kruskal and save the output to do str(output) to see what it call's the pvalues that it outputs.
-  #aovresults<-rbind(aovresults,PERM$aov.tab) 
-  loc.sub<-region.list[-i]
-  locations<-rbind(locations,c(loc.sub))
-}
-aovresults
-combinedtest<-cbind(locations,pvals)
-mult_perm<-data.frame(combinedtest)
-mult_perm
-mult_perm$pvaladj<-p.adjust(mult_perm$pvals,method="bonferroni")
-mult_perm
-```
 
-#### inverse simpson pairwise kruskal wallis
-```{r}
-sampledf<-data.frame(sample_data(ps))
-sampledf$Region<-as.factor(sampledf$Region)
-region.list<-levels(sampledf$Region)
-region.list
-aovresults<-c()
-pvals<-c()
-locations<-c()
-for (i in 1:length(region.list)){
-  region.leftout<-region.list[i]
-  alph_sub<-subset(alpha_coral,Region!=region.leftout) #instead of subset_samples use a subset() for the dataframe you are working with
-  #d.sub<-phyloseq::distance(ps_sub, "bray") # won't need this for kruskal
-  #df.new<-subset(sampledf,subset=Region!=region.leftout) # won't need this either
-  PERM<-kruskal.test(invsimp1~Region,alph_sub) #change to kruskal
-  print(PERM)
-  pvals<-c(pvals,PERM$'p.value') #this will change. run a kruskal and save the output to do str(output) to see what it call's the pvalues that it outputs.
-  #aovresults<-rbind(aovresults,PERM$aov.tab) 
-  loc.sub<-region.list[-i]
-  locations<-rbind(locations,c(loc.sub))
-}
-aovresults
-combinedtest<-cbind(locations,pvals)
-mult_perm<-data.frame(combinedtest)
-mult_perm
-mult_perm$pvaladj<-p.adjust(mult_perm$pvals,method="bonferroni")
-mult_perm
-```
+
+
 

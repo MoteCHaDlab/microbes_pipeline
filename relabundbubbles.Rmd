@@ -1,0 +1,116 @@
+---
+title: "Relative Abundance and Bubble plots"
+output: html_notebook
+---
+
+# Relative Abundance and Bubble Plots
+Relative abundance plots vs bubble plots
+
+## load packages
+```{r}
+library("ggplot2")
+library("phyloseq")
+library("RColorBrewer")
+library("reshape2")
+library("nlme")
+library("dplyr")
+library("compositions")
+library("tidyverse")
+```
+
+## load the files needed
+```{r}
+ps <- readRDS("examplePhyloseq.rds") #import the .rds phyloseq object made in the intro to phyloseq notebook
+ps #confirm it worked
+```
+
+## Relative Abundance plots
+### make mycolors
+```{r}
+physeq.f<-filter_taxa(ps, function(x) sum(x >= 100) > (0.01*length(x)), prune = TRUE) #filter out super small numbers
+physeq.f 
+head(sample_data(physeq.f))#just checking it worked
+head(tax_table(physeq.f))#just checking it worked
+physeq.f.ra <- transform_sample_counts(physeq.f, function(x) x*100/sum(x))
+physeq.f.ra.ord <- tax_glom(physeq.f.ra, "Class",NArm=FALSE)
+propData <- as.data.frame((otu_table(physeq.f.ra.ord)))
+plotDF <- propData %>%
+  rownames_to_column(var="taxa") %>%
+  melt() %>%
+  magrittr::set_names(c("sample", "taxa", "relab"))
+head(plotDF)#just checking it worked
+taxonomy.2 <- tax_table(physeq.f) %>%
+  as.data.frame() %>%
+  rownames_to_column(var="taxa")
+head(taxonomy.2)#just checking it worked
+head(plotDF)#just checking it worked
+plotDF <- left_join(plotDF, taxonomy.2, by="taxa") %>%
+  select(taxa, sample, relab, Class) #would need to update here too if you change it.
+head(plotDF)#just checking it worked
+
+```
+
+
+#### set colors
+```{r}
+length(levels(factor(plotDF$Class)))
+mycolors <- c("cornsilk2","darkgray","dimgray","gray0","lightpink","deeppink","deeppink3","red","red4","coral1","coral4","chocolate1","lightgoldenrodyellow","khaki","darkgoldenrod1","darkgoldenrod","chartreuse","darkolivegreen1","darkgreen","aquamarine","aquamarine3","aquamarine4","cyan","cornflowerblue","blue","midnightblue","darkslategray","darkslateblue","orchid1","blueviolet","magenta","darkorchid4","purple","darkmagenta","burlywood4")
+names(mycolors)<-levels(factor(plotDF$Class))
+mycolors
+```
+
+```{r}
+#physeq.f <- filter_taxa(ps, function(x) sum(x >= 100) > (0.01*length(x)), prune = TRUE) #filter out super small numbers
+physeq.f 
+head(sample_data(physeq.f))#just checking it worked
+head(tax_table(physeq.f))#just checking it worked
+physeq.f.ra <- transform_sample_counts(physeq.f, function(x) x*100/sum(x))
+physeq.f.ra.ord <- tax_glom(physeq.f.ra, "Class",NArm=FALSE)
+propData <- as.data.frame((otu_table(physeq.f.ra.ord)))
+plotDF1 <- propData %>%
+  rownames_to_column(var="taxa") %>%
+  melt() %>%
+  magrittr::set_names(c("sample", "taxa", "relab"))
+head(plotDF1)#just checking it worked
+taxonomy.2 <- tax_table(physeq.f) %>%
+  as.data.frame() %>%
+  rownames_to_column(var="taxa")
+head(taxonomy.2)#just checking it worked
+head(plotDF1)#just checking it worked
+plotDF1 <- left_join(plotDF1, taxonomy.2, by="taxa") %>% select(taxa, sample, relab, Class) #would need to update here too if you change it.
+head(plotDF1)#just checking it worked
+length(levels(factor(plotDF$Class)))
+mycolors <- c("red","orange","yellow","green","blue","magenta","darkorchid4","black")
+#mycolors <- c("cornsilk2","darkgray","dimgray","gray0","lightpink","deeppink","deeppink3","red","red4","coral1","coral4","chocolate1","lightgoldenrodyellow","khaki","darkgoldenrod1","darkgoldenrod","chartreuse","darkolivegreen1","darkgreen","aquamarine","aquamarine3","aquamarine4","cyan","cornflowerblue","blue","midnightblue","darkslategray","darkslateblue","orchid1","blueviolet","magenta","darkorchid4","purple","darkmagenta","burlywood4")
+names(mycolors)<-levels(factor(plotDF$Class))
+mycolors
+sampdata<-data.frame(sample_data(physeq.f))
+metadata.2 <- sampdata %>%
+  rownames_to_column(var="sample")
+metadata.2
+plotDF1 <- left_join(plotDF1, metadata.2, by="sample")
+head(plotDF1)#just checking it worked
+length(levels(factor(plotDF1$Class)))
+plotDF1$Class<-factor(plotDF1$Class)
+plotDF1$sample<-factor(plotDF1$sample)
+plotDF1$Site<-factor(plotDF1$Region)
+ggplot(plotDF1, aes(x=plotDF1$sample, relab, fill=Class)) + geom_bar(stat="identity", position = "stack") + theme(axis.text.x = element_text(angle = 90,size = 10)) + scale_fill_manual(values = mycolors,limits = levels(plotDF$Class)) + theme(legend.text=element_text(size=7), legend.position = "bottom",text = element_text(size=5),strip.text= element_text(size=15))+ facet_grid(~Region,space="free_x",scales="free_x",drop=TRUE)+theme(legend.title = element_text(size = 3),legend.text = element_text(size = 4.5))
+```
+
+
+## Bubble plots
+asvs pulled from simper
+```{r}
+physeq.f.ra <- transform_sample_counts(ps, function(x) x*100/sum(x))
+p<-merge_samples(physeq.f.ra,"Region")
+o<-otu_table(p)
+rowSums(otu_table(physeq.f.ra))
+propData <- as.data.frame(o)
+t<-data.frame(cbind(levels(as.factor(sample_data(ps)$Region))))
+t <-cbind(t,propData$ASV_2,propData$ASV_3,propData$ASV_4)
+colnames(t)<-c("Region","ASV_2","ASV_3","ASV_4")
+pcm = melt(t, id = c("Region")) #convert data frame from a "wide" format to a "long" format
+xx = ggplot(pcm, aes(x = Region, y = variable,fill=variable)) + geom_point(aes(size = as.numeric(value)), alpha = 0.75, shape = 21) +  scale_size_continuous(limits = c(0.000001, 100), range = c(.5,10), breaks = c(1,25,50,75)) +  labs( x= "", y = "", size = "Abundance", fill = "Region")  +  theme(legend.key=element_blank(), axis.text.x = element_text(colour = "black", size = 12, face = "bold", angle = 90, vjust = 0.3, hjust = 1), axis.text.y = element_text(colour = "black", face = "bold", size = 11), legend.text = element_text(size = 10, face ="bold", colour ="black"), legend.title = element_text(size = 12, face = "bold"), panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA, size = 1.2), legend.position = "right") + scale_y_discrete(limits = rev(levels(pcm$variable)))
+xx
+```
+

@@ -63,7 +63,7 @@ plotDF1$sample<-factor(plotDF1$sample) #make sample a factor
 plotDF1$Site<-factor(plotDF1$Region) #make Region a factor
 ggplot(plotDF1, aes(x=plotDF1$sample, relab, fill=Class)) + #make a plot with genotype/sample name on the x-axis, relative abundance on the y-axis, and color filled by Class. ALSO CHANGE CLASS HERE IF YOU WANT A DIFFERENT TAXONOMIC RANK
   geom_bar(stat="identity", position = "stack") + #make it a barplot with classes stacked on top of each other
-  theme(axis.text.x = element_text(angle = 90,size = 10)) + #set x-axis labels to be oriented vertically, and set the size of the text to 10
+  theme(axis.text.x = element_text(angle = 90,size = 6.5)) + #set x-axis labels to be oriented vertically, and set the size of the text to 10
   scale_fill_manual(values = mycolors,limits = levels(plotDF$Class)) + #set the colors being filled in by class to the mycolors variable made earlier
   facet_grid(~Region,space="free_x",scales="free_x",drop=TRUE) + #facet wrap (separate out) by Region
   theme(legend.title = element_text(size = 8),legend.text = element_text(size = 6),legend.position = "bottom") #set legent title size to 8 and legend text size to 6
@@ -75,16 +75,21 @@ What goes in:
 What goes out:
 ASVs pulled from simper
 ```{r}
-physeq.f.ra <- transform_sample_counts(ps, function(x) x*100/sum(x))
-p<-merge_samples(physeq.f.ra,"Region")
-o<-otu_table(p)
-rowSums(otu_table(physeq.f.ra))
-propData <- as.data.frame(o)
-t<-data.frame(cbind(levels(as.factor(sample_data(ps)$Region))))
-t <-cbind(t,propData$ASV_2,propData$ASV_3,propData$ASV_4)
-colnames(t)<-c("Region","ASV_2","ASV_3","ASV_4")
+physeq.f.ra <- transform_sample_counts(ps, function(x) x*100/sum(x)) #switch to relative abundance from raw abundance
+p<-merge_samples(physeq.f.ra,"Region") #merge by region
+o<-otu_table(p) #make variable of p's otu table
+rowSums(otu_table(physeq.f.ra)) #confirm that all of the rows add up to 100 (this makes sure that the data is actually in relative abundance format)
+propData <- as.data.frame(o) #make otu table a dataframe
+t<-data.frame(cbind(levels(as.factor(sample_data(ps)$Region)))) #make dataframe with region
+t <-cbind(t,propData$ASV_2,propData$ASV_3,propData$ASV_4) #add the abundance data of the 3 ASVs from the simper to the dataframe 
+colnames(t)<-c("Region","ASV_2","ASV_3","ASV_4") #set the column names
 pcm = melt(t, id = c("Region")) #convert data frame from a "wide" format to a "long" format
-xx = ggplot(pcm, aes(x = Region, y = variable,fill=variable)) + geom_point(aes(size = as.numeric(value)), alpha = 0.75, shape = 21) +  scale_size_continuous(limits = c(0.000001, 100), range = c(.5,10), breaks = c(1,25,50,75)) +  labs( x= "", y = "", size = "Abundance", fill = "Region")  +  theme(legend.key=element_blank(), axis.text.x = element_text(colour = "black", size = 12, face = "bold", angle = 90, vjust = 0.3, hjust = 1), axis.text.y = element_text(colour = "black", face = "bold", size = 11), legend.text = element_text(size = 10, face ="bold", colour ="black"), legend.title = element_text(size = 12, face = "bold"), panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA, size = 1.2), legend.position = "right") + scale_y_discrete(limits = rev(levels(pcm$variable)))
-xx
+xx = ggplot(pcm, aes(x = Region, y = variable,fill=variable)) + #make plot with Region as the x-axis, the significant ASVs as the y-axis, and color filled by the significant ASVs
+  geom_point(aes(size = as.numeric(value)), alpha = 0.75, shape = 21) +  #make bubble plot format where the size of the bubble is the relative abundance
+  scale_size_continuous(limits = c(0.000001, 100), range = c(.5,10), breaks = c(1,25,50,75)) + #set bubble size scaling
+  labs( x= "", y = "", size = "Abundance", fill = "Significant ASVs")  + #set labels for size legend and color legend
+  theme(legend.key=element_blank(), axis.text.x = element_text(colour = "black", size = 12, face = "bold", angle = 90, vjust = 0.3, hjust = 1), axis.text.y = element_text(colour = "black", face = "bold", size = 11), legend.text = element_text(size = 10, face ="bold", colour ="black"), legend.title = element_text(size = 12, face = "bold"), panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA, size = 1.2), legend.position = "right") + #set various text sizes and colors, as well as legend position
+  scale_y_discrete(limits = rev(levels(pcm$variable))) #set y-scale limits to significant ASVs
+xx #print plot
 ```
 

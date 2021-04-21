@@ -1,4 +1,3 @@
-
 # DADA2 & Silva
 
 Input: Illumina-sequenced paired-end fastq files that have been demultiplexed by sample and the barcodes/adapters have been removed. 
@@ -10,6 +9,7 @@ Output: amplicon sequence variant (ASV) table which is a higher-resolution analo
 Our work flow is a mash-up of the following two tutorials: 
 
 *Dada2 tutorial* https://benjjneb.github.io/dada2/tutorial.html
+
 *Dada2 with Big Data* https://benjjneb.github.io/dada2/bigdata.html
 
 ## Before you start this example work flow:

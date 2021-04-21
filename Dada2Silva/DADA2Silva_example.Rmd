@@ -215,10 +215,11 @@ The dada2 package GitHub maintains the most updated versions of the [Silva datab
 
 ```{r}
 # Assign taxonomy based on silva reference database at genus level, you must have the appropriate Silva database downloaded and in the appropriate folder.
-tax_silva <- assignTaxonomy(seqtab, "silva_nr99_v138.1_train_set.fa", multithread=TRUE)
+
+tax_silva <- assignTaxonomy(seqtab, "/Users/Swilliams/Documents/GitHub/microbes_pipeline/Dada2Silva/silva_nr99_v138.1_train_set.fa.gz", multithread=FALSE)
 
 # Assign taxonomy based on silva reference database at species (100%) level
-silva_sp <- addSpecies(tax_silva, "silva_species_assignment_v138.1.fa")
+silva_sp <- addSpecies(tax_silva, "/Users/Swilliams/Documents/GitHub/microbes_pipeline/Dada2Silva/silva_species_assignment_v138.1.fa.gz")
 
 # Export sequence table with genus and species assignments as phyloseq objects
 ps <- phyloseq(otu_table(seqtab, taxa_are_rows=FALSE), tax_table(tax_silva))

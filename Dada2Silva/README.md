@@ -1,7 +1,3 @@
----
-title: "DADA2 and Silva taxonomy to Phyloseq pipeline"
-output: html_document
----
 
 # DADA2 & Silva
 

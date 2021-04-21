@@ -1,0 +1,242 @@
+---
+title: "16S DADA2"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+Input: Illumina-sequenced paired-end fastq files that have been demultiplexed by sample and the barcodes/adapters have been removed. 
+
+Output: amplicon sequence variant (ASV) table which is a higher-resolution analogue of the traditional OTU table which recorde the number of times each **exact amplicon sequence variant** was observed in each sample. Taxonomy is then assigned using the SILVA reference database and the data is combined into a phyloseq object.
+
+## Some good resources for understanding the DADA2 pipeline
+
+Our work flow is a mash-up of the following two tutorials: 
+
+*Dada2 tutorial* https://benjjneb.github.io/dada2/tutorial.html
+*Dada2 with Big Data* https://benjjneb.github.io/dada2/bigdata.html
+
+## Starting from Mr. DNA
+
+1. Get the fastq files from [BaseSpace](https://basespace.illumina.com)
+2. If the samples are not demultiplexed, i.e. when you downloaded the fastq files from BaseSpace, they came in folders labeled something like "SAM1-53" and within the folder there are two files "SAM1-53.. ..R1_001.fastq.gz" and "SAM1-53.. ..R2_001.fastq.gz," You will need to demultiplex the samples, one way is by using [MrDNA's Free software](http://www.mrdnalab.com/mrdnafreesoftware/fastq-processor.html) FastqProcessor. Note that it only runs on a PC, so no Macs. You will also need the metadata files for each sample set. This also removes the barcodes and adapters.
+3. Once the samples are demultiplexed (and the barcodes/adapters are also removed), and you have forward and reverse fastq files for each sample, all fastq files need to be in one folder before you start.
+
+## DADA2 to Silva to Phyloseq 
+
+### Get things set up
+
+Load the R packages needed.
+```{r load libraries, message=FALSE, include=FALSE}
+library(ggplot2)
+library(gridExtra)
+library(tidyverse)
+### these are from bioconductor
+library(dada2)
+library(phyloseq)
+library(DECIPHER)
+library(phangorn)
+```
+
+Set the seed.
+```{r set seed}
+set.seed(100)
+```
+
+Set path to folder with all fastq files. In this example, we are only working with 3 samples, so 3 forward fastq files and 3 reverse fastq files.
+```{r}
+#Path will change, you need to specify it to your specific project folder
+path <- "/Users/Swilliams/Documents/GitHub/microbes_pipeline/Dada2Silva/fastqs"
+
+list.files(path)[1:3] #make sure it worked correctly
+
+```
+
+### Filter and Trim Steps
+
+This chunk sets it up so that forward and reverse reads are in the same order and you can get a list of file paths for all samples.
+```{r}
+# Sort ensures forward/reverse reads are in same order
+
+fnFs <- sort(list.files(path, pattern="_R1_001.fa.fastq"))
+fnRs <- sort(list.files(path, pattern="_R2_001.fa.fastq"))
+
+# Extract sample names, assuming filenames have format: SAMPLENAME_XXX.fastq
+
+sample.names <- sapply(strsplit(basename(fnFs), "_L"), `[`, 1) #forward names
+sample.namesR <- sapply(strsplit(basename(fnRs), "_L"), `[`, 1) #reverse names
+
+#check to make sure that there are no duplicates
+if(!identical(sample.names, sample.namesR)) stop("Forward and reverse files do not match.")
+duplicated(sample.names) #sanity check
+
+# Specify the full path to the fnFs (forward reads) and fnRs (reverse reads)
+fnFs <- file.path(path, fnFs)
+fnRs <- file.path(path, fnRs)
+fnFs[1:2]
+fnRs[1:2]
+```
+
+#### Plot the quality profiles
+
+Plot the visual summary of the distribution of quality scores as a function of sequence position for the fastq files
+```{r}
+plotQualityProfile(fnFs[1:3])
+```
+From the tutorial: In gray-scale is a heat map of the frequency of each quality score at each base position. The mean quality score at each position is shown by the green line, and the quartiles of the quality score distribution by the orange lines. The red line shows the scaled proportion of reads that extend to at least that position (this is more useful for other sequencing technologies, as Illumina reads are typically all the same length, hence the flat red line).
+
+Now the reverse reads:
+```{r}
+plotQualityProfile(fnRs[1:3])
+```
+
+#### Interpreting the quality profiles to set the filter and trim step:
+
+The reverse reads aren't as good quality as the forward reads, which can happen with Illumina sequencing. DADA2 is pretty robust to lower quality sequences. Trimming as the average qualities crash improves the algorithms sensitivity to rate sequence variants. 
+
+From the tutorial: *Your reads must still overlap after truncation in order to merge them later!* The tutorial is using 2x250 V4 sequence data, so the forward and reverse reads almost completely overlap and our trimming can be completely guided by the quality scores. If you are using a less-overlapping primer set, like V1-V2 or V3-V4, your truncLen must be large enough to maintain 20 + biological.length.variation nucleotides of overlap between them.
+
+We are going to be a bit conservative and just trim both at 210. Though, looking at the quality profiles, the forward could be trimmed at 240 and the reverse could be trimmed at 210 and there would still be sufficient overlap.
+
+#### The actual filter and trim step
+
+This chunk takes some time to run. It is a computer-time-extensive step. For the 3 example samples, it took my PC ~ 3 minutes to run the 'filterAndTrim function' (line 112). So estimate it taking about a minute per sample. 
+```{r}
+# Place filtered files in filtered/ subdirectory; these are empty until the function is run
+filtFs <- file.path(path, "filtered", paste0(sample.names, "_F_filt.fastq.gz")) #forwards
+filtRs <- file.path(path, "filtered", paste0(sample.names, "_R_filt.fastq.gz")) #reverses
+
+
+duplicated(filtFs) #sanity check to make sure that there are no doubles
+#name your filtered files
+names(filtFs) <- sample.names
+names(filtRs) <- sample.names
+
+#the filter and trim step
+out2 <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, #fowards, filtered forwards, reverses, & filtered reverses
+                      truncLen=c(210,210), #trunclen is decided on from the quality profiles and will change dataset to dataset
+                      #the following are all standard, but may need to be adjusted
+                      maxN=0, 
+                      maxEE=c(2,2), 
+                      truncQ=2, 
+                      rm.phix=TRUE,
+                      compress=TRUE,
+                      multithread=FALSE, #on windows multithread =FALSE
+                      #on Mac, use the multithread option, it goes faster
+                      matchIDs=TRUE) #not always needed, check function help.
+
+head(out2) #how many reads went in and out of each sample
+#the percent of reads making it through the filter and trim step:
+colSums(out2)[2]/colSums(out2)[1] 
+
+```
+
+#### Estimate errors
+This step takes a very very long time. Set multithread=TRUE when working on a mac.
+```{r}
+# Learn forward error rates
+errF <- learnErrors(filtFs, nbases=1e8, multithread=FALSE)
+
+# Learn reverse error rates
+errR <- learnErrors(filtRs, nbases=1e8, multithread=FALSE)
+
+# Visualize these error rates. You want the estimated error rates (black lines) to be a good fit to the observed error rates (points) and for the error rates drop with increased quality
+plotErrors(errF, nominalQ=TRUE)
+plotErrors(errR, nominalQ=TRUE)
+```
+From the tutorial: Points are the observed error rates for each consensus quality score. The black line shows the estimated error rates after convergence of the machine-learning algorithm. The red line shows the error rates expected under the nominal definition of the Q-score. 
+
+
+### The DADA2 step
+
+This is the core sample inference algorithm. DADA2 infers sample sequences exactly and resolves differences as little as 1 nucleotide. DADA2 identifies more real variants than other methods.
+
+Sample inference and merger of paired-end reads:
+```{r}
+#set up place for mergers
+mergers <- vector("list", length(sample.names))
+names(mergers) <- sample.names
+
+# Note: if this loop doesn't work, you've done something wrong. You've probably made an error earlier in the code, probably with the location of your forward and reverse reads and it's generated duplicate sample names
+# Normal to get warning message that there are duplicate sequences
+
+for(sam in sample.names) { #for each sample do the following:
+  cat("Processing:", sam, "\n")
+  derepF <- derepFastq(filtFs[[sam]]) #de-replicate forwards
+  ddF <- dada(derepF, err=errF, multithread=TRUE) # core sample interference algorithm
+  derepR <- derepFastq(filtRs[[sam]]) #de-repicate reverses
+  ddR <- dada(derepR, err=errR, multithread=TRUE) # core sample interference algorithm
+  merger <- mergePairs(ddF, derepF, ddR, derepR) # Merge paired end reads
+  mergers[[sam]] <- merger
+}
+
+```
+
+#### Some more filtering post-DADA2
+```{r}
+rm(derepF); rm(derepR) #removes them from R environment to same memory
+
+# Make sequence table from merged reads
+st.all <- makeSequenceTable(mergers) # Normal to get warning message saying the sequences being tabled vary in length
+
+# Inspect distribution of read lengths
+table(nchar(getSequences(st.all)))
+hist(nchar(getSequences(st.all)))
+
+# Remove any ASVs that are considerably off target length
+seqtab_trimmed <- st.all[,nchar(colnames(st.all)) %in% seq(250,255)]
+
+# Inspect distribution of read lengths after removal of off-target reads
+table(nchar(getSequences(seqtab_trimmed)))
+hist(nchar(getSequences(seqtab_trimmed)))
+
+# Remove chimeric sequences
+seqtab <- removeBimeraDenovo(seqtab_trimmed, method="consensus", multithread=FALSE, verbose = T) #Identified 
+
+sum(st.all)-sum(seqtab) # How many chimeras were removed? 
+sum(seqtab)/sum(st.all) #Percent of sequences remaining: 
+
+# track reads through the pipeline: 
+getN <- function(x) sum(getUniques(x))
+summary_tab <- data.frame(row.names=sample.names, dada2_input=out2[,1],filtered=out2[,2], nonchim=rowSums(seqtab),final_perc_reads_retained=round(rowSums(seqtab)/out2[,1]*100, 1))
+#print summary table
+summary_tab 
+
+#save summary table
+write.table(summary_tab, file = "reads_lost.txt", sep="\t") 
+
+# Save chimera-free ASV table as downstream tasks may cause R to crash
+saveRDS(seqtab, "seqtab.rds")
+```
+
+### Assign taxonomy using Silva reference database
+
+The dada2 package GitHub maintains the most updated versions of the [Silva databases.](https://benjjneb.github.io/dada2/training.html). The versions in this GitHub repository, used here, were last updated on March 10, 2021.
+
+```{r}
+# Assign taxonomy based on silva reference database at genus level, you must have the appropriate Silva database downloaded and in the appropriate folder.
+tax_silva <- assignTaxonomy(seqtab, "silva_nr99_v138.1_train_set.fa", multithread=TRUE)
+
+# Assign taxonomy based on silva reference database at species (100%) level
+silva_sp <- addSpecies(tax_silva, "silva_species_assignment_v138.1.fa")
+
+# Export sequence table with genus and species assignments as phyloseq objects
+ps <- phyloseq(otu_table(seqtab, taxa_are_rows=FALSE), tax_table(tax_silva))
+ps_sp <- phyloseq(otu_table(seqtab, taxa_are_rows=FALSE), tax_table(silva_sp))
+
+#originally, sequences were the taxa names
+seqs.ps<-taxa_names(ps_sp)
+
+#change taxa names to ASVs
+taxa_names(ps_sp) <- paste0("ASV", seq(ntaxa(ps_sp)))
+
+#save a file of the taxa table with ASVs and sequences
+taxtab.seqs<-cbind(data.frame(tax_table(ps_sp)), seqs.ps)
+write.csv(taxtab.seqs,"taxatable_withsequences.csv")
+
+# Save as RDS objects
+saveRDS(ps, file = "ps.rds") #does not have species level
+saveRDS(ps_sp, file = "ps_sp.rds") #with species level and ASV labeling
+
+```
+

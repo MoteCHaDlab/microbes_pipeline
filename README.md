@@ -34,3 +34,5 @@ Let's break github!!!! :)
 3/30/2021: Samara fixed betadisper code to include letters (it was a scale issue) and started adding in the not code parts to the Beta Diversity notebook
 
 4/19/2021: Sara updated Beta diversity and Alpha diversity code.
+
+4/21/2021: Sara added the Dada2Silva sub-folder and code

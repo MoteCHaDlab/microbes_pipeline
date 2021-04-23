@@ -27,11 +27,11 @@ ps #confirm it worked
 
 ```
 
-### Add information ot taxonomy
+### Add information to taxonomy
 ```{r}
 tax.clean<-data.frame(tax_table(ps))
 ### Ok, so some ASVs don't have classification at all levels, we can use the following for loop to add some info
-for (i in 1:nrow(tax.clean)){
+for (i in 1:nrow(tax.clean)){ #this loop adds TaxonomicRank_LowestClassification to blanks
   if (tax.clean[i,2] == ""){
     kingdom <- paste("Kingdom_", tax.clean[i,1], sep = "")
     tax.clean[i, 2:7] <- kingdom
@@ -83,7 +83,7 @@ plotDF1 <- propData %>% #within the propData variable
 head(plotDF1)#inspect to make sure it worked
 
 #extract the taxonomy info into something that can be combined with the plot dataframe
-taxonomy.2 <- tax_table(physeq.f) %>%
+taxonomy.2 <- tax_table(physeq.f.ra.glom) %>%
   as.data.frame() %>%
   rownames_to_column(var="taxa") #add the rownames to a column called taxa
 head(taxonomy.2)#just checking it worked
@@ -92,7 +92,7 @@ head(taxonomy.2)#just checking it worked
 plotDF1 <- left_join(plotDF1, taxonomy.2, by="taxa") %>% select(taxa, sample, relab, Class) 
 head(plotDF1)#just checking it worked
 
-sampdata<-data.frame(sample_data(physeq.f)) #make dataframe of the sample data
+sampdata<-data.frame(sample_data(physeq.f.ra.glom)) #make dataframe of the sample data
 metadata.2 <- sampdata %>%
   rownames_to_column(var="sample") #make a column of rownames (sample)
 head(metadata.2)
@@ -101,7 +101,7 @@ head(metadata.2)
 plotDF1 <- left_join(plotDF1, metadata.2, by="sample") 
 head(plotDF1) #just checking it worked
 
-#check class of things that should be factors. ALSO CHANGE CLASS HERE IF YOU WANT A DIFFERENT TAXONOMIC RANK
+#check class of things that should be factors.
 plotDF1$sample<-factor(plotDF1$sample) 
 plotDF1$Site<-factor(plotDF1$Region) 
 
@@ -110,8 +110,6 @@ plotDF1$Site<-factor(plotDF1$Region)
 plotDF1[plotDF1$relab <1, ]$Class<-"<1% abundance"
 head(plotDF1)
 plotDF1$Class<-factor(plotDF1$Class) 
-
-
 ```
 
 ### Setup your colors
@@ -134,7 +132,7 @@ mycolors #confirm it worked
 ggplot(plotDF1, aes(x=plotDF1$sample, relab, fill=Class)) + 
   #make it a barplot with classes stacked on top of each other
   geom_bar(stat="identity", position = "stack") + 
-  #set x-axis labels to be oriented vertically, and set the size of the text to 10
+  #set x-axis labels to be oriented vertically, and set the size of the text to 6.5
   theme(axis.text.x = element_text(angle = 90,size = 6.5)) + 
   #set the colors being filled in by class to the mycolors variable made earlier
   scale_fill_manual(values = mycolors,limits = levels(plotDF1$Class)) + 
@@ -161,7 +159,7 @@ physeq.f.ra <- transform_sample_counts(ps, function(x) x*100/sum(x))
 
 #merge by region
 p<-merge_samples(physeq.f.ra,"Region")
-
+head(data.frame(otu_table(p)))
 o<-otu_table(p) #make variable of p's otu table
 
 rowSums(otu_table(physeq.f.ra)) #confirm that all of the rows add up to 100 (this makes sure that the data is actually in relative abundance format)

@@ -197,7 +197,7 @@ for (i in 1:length(region.list)){
   region.leftout<-region.list[i]
   alph_sub<-subset(alpha_coral,Region!=region.leftout) #subset the alpha metrics to just two locations
   kwt<-kruskal.test(rich1~Region,alph_sub) #kruskal wallis test
-  print(kwt)
+  print(kwt) 
   pvals<-c(pvals,kwt$'p.value') #save the pval 
   locations<-rbind(locations,c(region.list[-i]))#save the locations tested
 }

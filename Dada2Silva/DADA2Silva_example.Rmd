@@ -44,6 +44,8 @@ set.seed(100)
 ```
 
 Set path to folder with all fastq files. In this example, we are only working with 3 samples, so 3 forward fastq files and 3 reverse fastq files.
+
+**This is why all fastq files need to be in one folder: you are telling R to look in this folder for your fastqs, if they are not all in this folder, then they will not be used.**
 ```{r}
 #Path will change, you need to specify it to your specific project folder
 path <- "/Users/Swilliams/Documents/GitHub/microbes_pipeline/Dada2Silva/fastqs"

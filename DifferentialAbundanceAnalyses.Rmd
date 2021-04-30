@@ -1,0 +1,307 @@
+---
+title: "ANCOM vs. SIMPER vs. CORNCOB"
+output: html_notebook
+---
+
+# The difference between ANCOM and SIMPER and CornCob
+- ANCOM - which asvs are significantly different
+- SIMPER - compares 2 groups and determines which taxa contributes to differences
+- CornCob - an individual taxon regression model that uses abundance tables and sample
+data to model differential abundances and addresses many statistical challenges in analyzing microbial data
+
+Load in the libraries and source code files you will need:
+```{r}
+library(nlme)
+library(dplyr)
+library(ggplot2)
+library(compositions)
+library(phyloseq)
+library(vegan)
+library(tidyverse)
+library(patchwork)
+library(corncob)
+#script needed to run ANCOM
+source("ANCOM_funcs.R")
+```
+
+# ANCOM: Analysis of Composition of Microbes
+
+Mandal S., Van Treuren W., White R. A., Eggesb M., Knight R., Peddada S. D. (2015). Analysis of composition of microbiomes: a novel method for studying microbial composition. Microb. Ecol. Health Dis. 26, 1–7. 10.3402/mehd.v26.27663; https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4450248/ 
+
+## Purpose
+
+Used for comparing the composition of microbiomes in two or more populations. ANCOM makes no distributional assumptions and can be used in a linear model framework to adjust for covariates. It also scales well for large datasets. 
+
+Used to analyze differential abundances of bacterial taxa across factors in a group. For example, finding differential abundances of taxa within different coral species or within different progression time points. It returns the W-statistic, the higher the W, the more taxa an ASV is significantly different against. 
+
+See Rosales et al., 2020 for a good example https://www.frontiersin.org/articles/10.3389/fmicb.2020.00681/full?report=r
+
+## Code
+
+### Source
+
+ANCOM v2.1: https://github.com/FrederickHuangLin/ANCOM 
+
+### Implementation
+
+Make sure that you have 'ANCOM_funcs.r' saved in the same file as the R notebook/markdown you are working in. 
+
+#### Get your data in
+
+We're using the ACER microbiome dataset as an example.
+
+```{r}
+ps<-readRDS("examplePhyloseq.rds")
+ps
+summary(sample_data(ps))
+```
+#### Pre-processing
+
+feature_table_pre_process(feature_table, meta_data, sample_var, group_var = NULL, out_cut = 0.05, zero_cut = 0.90, lib_cut, neg_lb)
+
+Feature table = your otu table AND the taxa need to be in rows and the samples need to be in columns and the values need to be absolute abundances
+meta_data = sample data
+sample_var = column name of sample IDs
+group_var = name of the group indicator
+
+```{r}
+dim(otu_table(ps)) #check your rows and columns
+#[1]   64 234; here samples are rows, so we need to transform it
+otu.df<-t(data.frame(otu_table(ps)))
+dim(otu.df) #[1] 234   64; now we're good
+meta_data<-data.frame(sample_data(ps))
+
+#set up for pre-processing function
+group_var = NULL
+out_cut = 0.05
+zero_cut = 0.90
+lib_cut = 1000
+neg_lb = FALSE
+prepro<-feature_table_pre_process(otu.df,meta_data,sample_var="Sample.ID",group_var, out_cut, zero_cut, lib_cut, neg_1b)
+
+prepro
+
+feature_table <- prepro$feature_table # Preprocessed feature table
+meta_data <- prepro$meta_data # Preprocessed metadata
+struc_zero <- prepro$structure_zeros # Structural zero info
+
+```
+
+#### Running the ANCOM
+
+ANCOM(feature_table, meta_data, struc_zero, main_var, p_adj_method, alpha, adj_formula, rand_formula, ...)
+
+main_var = the name of the main variable of interest --> name of column for groups you are comparing
+
+```{r}
+#set up parameters
+main_var = "Region"
+p_adj_method = "BH"
+alpha = 0.05
+adj_formula = NULL
+rand_formula = NULL
+t_start = Sys.time()
+#run the ANCOM
+res = ANCOM(feature_table, meta_data, struc_zero, main_var, p_adj_method, alpha, adj_formula, rand_formula)
+#check run time
+t_end = Sys.time()
+t_run = t_end - t_start
+t_run
+```
+
+The ANCOM returns the w statistic for each taxa and subsequent columns which are logical indicators of whether an OTU or taxon is differentially abundant under a series of cutoffs (0.9, 0.8, 0.7 and 0.6). detected_0.7 is commonly used.
+
+```{r}
+res
+dif.abund.tax<-res$out[res$out$detected_0.7==TRUE,]
+dif.abund.tax
+```
+
+```{r}
+cbind(dif.abund.tax$W,data.frame(tax_table(ps)[c(2,8,30)]))
+```
+So here, there are 3 differentially abundant ASVs all are Spirochaetales, Genus Spirochaeta_2.
+
+#### How to subset your phyloseq object by the asvs determined to be differentially abundant by ANCOM
+```{r}
+ps_difabund<-subset_taxa(ps, rownames(tax_table(ps)) %in% dif.abund.tax$taxa_id)
+ps_difabund
+```
+
+
+# SIMPER: similiarity percentage analysis
+
+Clarke, K. R. (1993). Non‐parametric multivariate analyses of changes in community structure. Australian journal of ecology, 18(1), 117-143.
+
+https://onlinelibrary.wiley.com/doi/10.1111/j.1442-9993.1993.tb00438.x 
+
+## Purpose
+
+The simper functions performs pairwise comparisons of groups of sampling units and finds the contribution of each species to the average between-group Bray-Curtis dissimilarity. Although the method is called simper, it really studied dissimilarities instead of similarities (Clarke 1993).
+
+Used to identify which taxa are most important at driving the differences among the groups.
+
+Used to identify the main contributing taxa for similiarity within each of the groups or differences between the groups.
+
+## Code
+
+simper is a function in the vegan package. 
+
+The function displays most important species for each pair of groups. These species contribute at least to 70 % of the differences between groups. data frames also include the cumulative contributions and are ordered by species contribution.The method gives the contribution of each species to overall dissimilarities, but these are caused by variation in species abundances, and only partly by differences among groups. ... *So don't use SIMPER because it is biased by highly abundant species.*
+
+```{r}
+df<-(data.frame(otu_table(ps)))
+sampledf<-data.frame(sample_data(ps))
+simp<-simper(df,sampledf$Region)
+str(simp)
+summary(simp,ordered=TRUE)
+
+
+```
+
+Can use Kruskal Wallis to test significance
+```{r}
+kruskal.test(df$ASV_1~sampledf$Region)
+kruskal.test(df$ASV_2~sampledf$Region)
+
+```
+#### Now, what about ANOSIM?
+
+Analysis of similarities (ANOSIM) provides a way to test statistically whether there is a significant difference between two or more groups of sampling units. ... Ok, so it's basically a SIMPER but assigns a p value to obtain statistical significance and doesn't tell you what ASVs are different.
+ 
+```{r}
+anosim(df,sampledf$Region)
+```
+
+### CornCob
+
+From the corncob intro: Effectively modeling microbial relative abundance poses a number of statistical challenges, including:
+- different sequencing depth,
+- excessive zeros from unobserved taxa,
+- high variability of empirical relative abundances (overdispersion),
+- within-taxon correlation,
+- hypothesis testing with categorical and continuous covariates.
+
+Corncob is an individual taxon regression model that uses abundance tables and sample data. corncob is able to model differential abundance and differential variability, and addresses each of the
+challenges presented above.
+
+```{r}
+help(package = "corncob", help_type = "html")
+utils::browseVignettes(package = "corncob")
+```
+#### Fit a model to look at one ASV 
+
+Use the bbdml function: Maximum likelihood for the beta-binomial distribution
+Since we aren't looking at any covariates, we just use the formula response ~ 1
+```{r}
+
+corn<-bbdml(formula=ASV_2~1, #model to be fitted to the abundance
+            phi.formula = ~1, #model to be fitted to the dispersion
+            data=ps) #phyloseq obeject
+plot(corn, #model output
+     b=50, #number of bootstrap simulations to be used to approximate the prediction intervals, rec. 1000
+     total=FALSE, #makes plot on the counts scale with 95% prediction intervals, default is relative abundance
+     color="Region") #color the points by region of sample
+```
+The bars represent the 95% prediction intervals for the observed relative abundance by sample. We can observe on this plot that it might be of interest to distinguish between the three groups with covariates.
+The average empirical relative abundance for the samples from the lower keys are lowerthan the samples from the middle and upper keys.
+
+### Add a covariate
+```{r}
+corn_da<-bbdml(formula=ASV_2~Region, #now lets look at ASV_2 as it covaries with region
+            phi.formula = ~Region, #model to be fitted to the dispersion
+            data=ps) #phyloseq obeject
+plot(corn_da, #model output
+     b=50, #number of bootstrap simulations to be used to approximate the prediction intervals, rec. 1000
+     #total=TRUE, #makes plot on the counts scale with 95% prediction intervals, default is relative abundance
+     color="Region") #color the points by region of sample
+
+```
+Visually, the co-variate (region) provides a much better fit to the data.
+
+#### Interpreting the model output
+```{r}
+summary(corn_da)
+```
+So since we have 3 levels of Region, the test is comparing the middle and upper to the lower keys. 
+
+From the coefficients associated with abundance:
+Middle keys have significantly more ASV 2 than lower, know this because estimate is positive and P<0.05
+Upper keys have significantly more ASV2 than lower as well
+
+From the coefficients associated with dispersion:
+Both coefficient estimates are positive, though only the upper keys is significant, so upper keys samples have significantly more variability of ASV 2 than lower keys
+
+#### Analysis for multiple taxa
+
+```{r}
+set.seed(1)
+da_analysis<-differentialTest(formula = ~Region,
+                              phi.formula = ~Region,
+                              formula_null = ~1,
+                              phi.formula_null = ~1,
+                              test="Wald",
+                              boot=FALSE,
+                              data=ps,
+                              fdr_cutoff = 0.05)
+```
+ 
+```{r}
+da_analysis
+da_analysis$significant_taxa
+plot(da_analysis,level="Genus")
+```
+Interpreting this graph: The effect of Region on ASV1 is negative for both the Middle and upper Keys when compared to the baseline, lower keys. THe middle and upper keys regions have a positive effect on ASV 2 compared to the lower keys. 
+
+```{r}
+otu_to_taxonomy(da_analysis$significant_taxa,data=ps)
+```
+
+### We care about upper vs lower, lower vs middle, and upper vs middle, so we can do pairwise tests
+```{r}
+set.seed(1)
+ps_noout_ul<-subset_samples(ps,Region!="Middle Keys")
+ps_noout_um<-subset_samples(ps,Region!="Lower Keys")
+ps_noout_ml<-subset_samples(ps,Region!="Upper Keys")
+da_analysis_ul<-differentialTest(formula = ~Region,
+                              phi.formula = ~Region,
+                              formula_null = ~1,
+                              phi.formula_null = ~1,
+                              test="Wald",
+                              boot=FALSE,
+                              data=ps_noout_ul,
+                              fdr_cutoff = 0.05)
+da_analysis_um<-differentialTest(formula = ~Region,
+                              phi.formula = ~Region,
+                              formula_null = ~1,
+                              phi.formula_null = ~1,
+                              test="Wald",
+                              boot=FALSE,
+                              data=ps_noout_um,
+                              fdr_cutoff = 0.05)
+da_analysis_ml<-differentialTest(formula = ~Region,
+                              phi.formula = ~Region,
+                              formula_null = ~1,
+                              phi.formula_null = ~1,
+                              test="Wald",
+                              boot=FALSE,
+                              data=ps_noout_ml,
+                              fdr_cutoff = 0.05)
+
+da_analysis_ul$significant_taxa
+da_analysis_um$significant_taxa
+da_analysis_ml$significant_taxa
+```
+
+```{r,fig.height=6}
+#da_analysis_um$significant_taxa
+p_ul<-plot(da_analysis_ul,level="Genus")
+#p_um<-plot(da_analysis_um,level="Genus") #no sig taxa
+p_ml<-plot(da_analysis_ml,level="Genus")
+p_ul/p_ml
+```
+### how to get the data out of the plots
+```{r}
+p_ul$data
+```
+

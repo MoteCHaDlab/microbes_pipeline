@@ -1,0 +1,45 @@
+---
+title: "Microshades Relative abundance figures"
+output: html_notebook
+---
+
+remotes::install_github("mikemc/speedyseq")
+remotes::install_github("KarstensLab/microshades")
+
+```{r}
+library(microshades)
+library(phyloseq)
+library(ggplot2)
+library(dplyr)
+library(cowplot)
+```
+## load the files needed
+```{r}
+ps <- readRDS("examplePhyloseq.rds") #import the .rds phyloseq object made in the intro to phyloseq notebook
+ps #confirm it worked
+
+```
+
+```{r}
+mdf_prep <- prep_mdf(ps, subgroup_level = "Class")
+
+# Create a color object for the specified data
+color_obj_v1v3_stool <- create_color_dfs(mdf_prep, group_level = "Phylum", subgroup_level = "Class", cvd = TRUE)
+
+
+# Extract
+mdf_v1v3_stool <- color_obj_v1v3_stool$mdf
+cdf_v1v3_stool <- color_obj_v1v3_stool$cdf
+
+```
+
+
+```{r}
+plot_1 <- plot_microshades(mdf_v1v3_stool, cdf_v1v3_stool, group_label = "Phylum Class")
+
+plot_1 + scale_y_continuous(labels = scales::percent, expand = expansion(0)) +
+  theme(legend.key.size = unit(0.2, "cm"), text=element_text(size=10)) +
+  theme(axis.text.x = element_text(size= 6)) 
+
+```
+

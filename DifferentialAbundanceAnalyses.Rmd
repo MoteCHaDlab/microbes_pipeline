@@ -189,6 +189,7 @@ challenges presented above.
 help(package = "corncob", help_type = "html")
 utils::browseVignettes(package = "corncob")
 ```
+
 #### Fit a model to look at one ASV 
 
 Use the bbdml function: Maximum likelihood for the beta-binomial distribution
@@ -213,7 +214,7 @@ corn_da<-bbdml(formula=ASV_2~Region, #now lets look at ASV_2 as it covaries with
             data=ps) #phyloseq obeject
 plot(corn_da, #model output
      b=50, #number of bootstrap simulations to be used to approximate the prediction intervals, rec. 1000
-     #total=TRUE, #makes plot on the counts scale with 95% prediction intervals, default is relative abundance
+     total=FALSE, #makes plot on the counts scale with 95% prediction intervals, default is relative abundance
      color="Region") #color the points by region of sample
 
 ```
